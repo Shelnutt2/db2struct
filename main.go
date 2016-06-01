@@ -48,7 +48,7 @@ func main() {
 		return
 	}
 
-	db, err := sql.Open("mysql", mysqlUser+":"+mysqlPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(*mariadbPort)+")/"+*mariadbDatabase+"?charset=utf8&parseTime=True")
+	db, err := sql.Open("mysql", mysqlUser+":"+mysqlPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(*mariadbPort)+")/"+*mariadbDatabase+"?&parseTime=True")
 	defer db.Close()
 
 	if err != nil {
@@ -72,7 +72,7 @@ func main() {
 	values := make([]interface{}, count)
 	valuePtrs := make([]interface{}, count)
 
-	finalResult := map[string]string{}
+	finalResult := make(map[string]interface{})
 	for rows.Next() {
 		for i, _ := range columns {
 			valuePtrs[i] = &values[i]
@@ -84,7 +84,7 @@ func main() {
 			continue
 		}
 
-		tmpStruct := map[string]string{}
+		tmpStruct := make(map[string]interface{})
 
 		for i, col := range columns {
 			var v interface{}
@@ -95,7 +95,7 @@ func main() {
 			} else {
 				v = val
 			}
-			tmpStruct[col] = fmt.Sprintf("%s", v)
+			tmpStruct[col] = v
 		}
 
 		finalResult = tmpStruct
