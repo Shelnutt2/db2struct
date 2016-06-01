@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 
+	"github.com/ChimeraCoder/gojson"
 	goopt "github.com/droundy/goopt"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -109,5 +111,13 @@ func main() {
 	}
 
 	fmt.Println(string(json))
+
+	struc, err := json2struct.Generate(bytes.NewReader(json), "", "")
+
+	if err != nil {
+		fmt.Println("Error in creating struct from json: " + err.Error())
+	}
+
+	fmt.Println(string(struc))
 
 }
