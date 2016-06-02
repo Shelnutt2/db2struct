@@ -231,6 +231,10 @@ func mysqlTypeToGoType(mysqlType string, nullable bool) string {
 		return "time.Time"
 	case "date":
 		return "time.Time"
+	case "time":
+		return "time.Time"
+	case "timestamp":
+		return "time.Time"
 	case "decimal":
 		if nullable {
 			return "sql.NullFloat64"
