@@ -20,6 +20,9 @@ var mariadbTable = goopt.String([]string{"-t", "--table"}, "", "Table to build s
 var mariadbDatabase = goopt.String([]string{"-d", "--database"}, "", "Database to for connection")
 var mysqlUser = os.Getenv("MYSQL_USERNAME")
 var mysqlPassword = os.Getenv("MYSQL_PASSWORD")
+var verbose = goopt.Flag([]string{"-v", "--verbose"}, []string{}, "Enable verbose output", "")
+var packageName = goopt.String([]string{"--package"}, "", "name to set for package")
+var structName = goopt.String([]string{"--struct"}, "", "name to set for struct")
 
 func init() {
 	//Parse options
@@ -30,7 +33,7 @@ func init() {
 		return "Mariadb http Check"
 	}
 	goopt.Version = "0.0.1"
-	goopt.Summary = "mysql-to-struct [-H] [-p]"
+	goopt.Summary = "mysql-to-struct [-H] [-p] [-v]"
 
 }
 
@@ -38,7 +41,9 @@ func main() {
 	if mariadbHostPassed != nil && *mariadbHostPassed != "" {
 		mariadbHost = *mariadbHostPassed
 	}
-	fmt.Println("Connecting to mysql server " + mariadbHost + ":" + strconv.Itoa(*mariadbPort))
+	if *verbose {
+		fmt.Println("Connecting to mysql server " + mariadbHost + ":" + strconv.Itoa(*mariadbPort))
+	}
 
 	if mariadbDatabase == nil || *mariadbDatabase == "" {
 		fmt.Println("Database can not be null")
@@ -60,7 +65,9 @@ func main() {
 
 	query := "SELECT * FROM " + *mariadbTable + " limit 1"
 
-	fmt.Println("running: " + query)
+	if *verbose {
+		fmt.Println("running: " + query)
+	}
 
 	rows, err := db.Query(query)
 	defer rows.Close()
@@ -76,7 +83,7 @@ func main() {
 
 	finalResult := make(map[string]interface{})
 	for rows.Next() {
-		for i, _ := range columns {
+		for i := range columns {
 			valuePtrs[i] = &values[i]
 		}
 		err = rows.Scan(valuePtrs...)
@@ -91,8 +98,7 @@ func main() {
 		for i, col := range columns {
 			var v interface{}
 			val := values[i]
-			b, ok := val.([]byte)
-			if ok {
+			if b, ok := val.([]byte); ok {
 				v = string(b)
 			} else {
 				v = val
@@ -110,9 +116,11 @@ func main() {
 		fmt.Println("Error creating json: " + err.Error())
 	}
 
-	fmt.Println(string(json))
+	if *verbose {
+		fmt.Println(string(json))
+	}
 
-	struc, err := json2struct.Generate(bytes.NewReader(json), "", "")
+	struc, err := json2struct.Generate(bytes.NewReader(json), *structName, *packageName)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())
