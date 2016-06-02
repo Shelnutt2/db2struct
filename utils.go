@@ -61,7 +61,7 @@ var intToWordMap = []string{
 
 // Generate Given a JSON string representation of an object and a name structName,
 // attemp to generate a struct definition
-func Generate(columnTypes map[string]string, structName string, pkgName string) ([]byte, error) {
+func Generate(columnTypes map[string]map[string]string, structName string, pkgName string) ([]byte, error) {
 	src := fmt.Sprintf("package %s\ntype %s %s}",
 		pkgName,
 		structName,
@@ -74,7 +74,7 @@ func Generate(columnTypes map[string]string, structName string, pkgName string) 
 }
 
 // Generate go struct entries for a map[string]interface{} structure
-func generateTypes(obj map[string]string, depth int) string {
+func generateTypes(obj map[string]map[string]string, depth int) string {
 	structure := "struct {"
 
 	keys := make([]string, 0, len(obj))
@@ -85,7 +85,11 @@ func generateTypes(obj map[string]string, depth int) string {
 
 	for _, key := range keys {
 		mysqlType := obj[key]
-		valueType := mysqlTypeToGoType(mysqlType)
+		nullable := false
+		if mysqlType["nullable"] == "YES" {
+			nullable = true
+		}
+		valueType := mysqlTypeToGoType(mysqlType["value"], nullable)
 
 		fieldName := fmtFieldName(stringifyFirstChar(key))
 		structure += fmt.Sprintf("\n%s %s `json:\"%s\"`",
@@ -206,23 +210,41 @@ func stringifyFirstChar(str string) string {
 }
 
 // mysqlTypeToGoType makes mysql to go
-func mysqlTypeToGoType(mysqlType string) string {
+func mysqlTypeToGoType(mysqlType string, nullable bool) string {
 	switch mysqlType {
 	case "int":
+		if nullable {
+			return "sql.NullInt64"
+		}
 		return "int"
 	case "bigint":
+		if nullable {
+			return "sql.NullInt64"
+		}
 		return "int64"
 	case "varchar":
+		if nullable {
+			return "sql.NullString"
+		}
 		return "string"
 	case "datetime":
 		return "time.Time"
 	case "date":
 		return "time.Time"
 	case "decimal":
+		if nullable {
+			return "sql.NullFloat64"
+		}
 		return "float64"
 	case "float":
+		if nullable {
+			return "sql.NullFloat64"
+		}
 		return "float32"
 	case "double":
+		if nullable {
+			return "sql.NullFloat64"
+		}
 		return "float64"
 	}
 

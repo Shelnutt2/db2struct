@@ -60,8 +60,8 @@ func main() {
 		return
 	}
 
-	columnDataTypes := make(map[string]string)
-	columnDataTypeQuery := "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
+	columnDataTypes := make(map[string]map[string]string)
+	columnDataTypeQuery := "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
 
 	if *verbose {
 		fmt.Println("running: " + columnDataTypeQuery)
@@ -78,9 +78,10 @@ func main() {
 	for rows.Next() {
 		var column string
 		var dataType string
-		rows.Scan(&column, &dataType)
+		var nullable string
+		rows.Scan(&column, &dataType, &nullable)
 
-		columnDataTypes[column] = dataType
+		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable}
 	}
 
 	struc, err := Generate(columnDataTypes, *structName, *packageName)
