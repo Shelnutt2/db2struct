@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 
-	"github.com/ChimeraCoder/gojson"
 	goopt "github.com/droundy/goopt"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -63,64 +60,30 @@ func main() {
 		return
 	}
 
-	query := "SELECT * FROM " + *mariadbTable + " limit 1"
+	columnDataTypes := make(map[string]string)
+	columnDataTypeQuery := "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
 
 	if *verbose {
-		fmt.Println("running: " + query)
+		fmt.Println("running: " + columnDataTypeQuery)
 	}
 
-	rows, err := db.Query(query)
-	defer rows.Close()
+	rows, err := db.Query(columnDataTypeQuery, *mariadbDatabase, *mariadbTable)
 
 	if err != nil {
 		fmt.Println("Error selecting from db: " + err.Error())
+		return
 	}
+	defer rows.Close()
 
-	columns, _ := rows.Columns()
-	count := len(columns)
-	values := make([]interface{}, count)
-	valuePtrs := make([]interface{}, count)
-
-	finalResult := make(map[string]interface{})
 	for rows.Next() {
-		for i := range columns {
-			valuePtrs[i] = &values[i]
-		}
-		err = rows.Scan(valuePtrs...)
+		var column string
+		var dataType string
+		rows.Scan(&column, &dataType)
 
-		if err != nil {
-			fmt.Println("Could not scan row: " + err.Error())
-			continue
-		}
-
-		tmpStruct := make(map[string]interface{})
-
-		for i, col := range columns {
-			var v interface{}
-			val := values[i]
-			if b, ok := val.([]byte); ok {
-				v = string(b)
-			} else {
-				v = val
-			}
-			tmpStruct[col] = v
-		}
-
-		finalResult = tmpStruct
-		break
+		columnDataTypes[column] = dataType
 	}
 
-	json, err := json.MarshalIndent(finalResult, "", "\t")
-
-	if err != nil {
-		fmt.Println("Error creating json: " + err.Error())
-	}
-
-	if *verbose {
-		fmt.Println(string(json))
-	}
-
-	struc, err := json2struct.Generate(bytes.NewReader(json), *structName, *packageName)
+	struc, err := Generate(columnDataTypes, *structName, *packageName)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())
