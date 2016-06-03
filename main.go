@@ -106,7 +106,9 @@ func main() {
 		fmt.Println("Error selecting from db: " + err.Error())
 		return
 	}
-	defer rows.Close()
+	if db != nil {
+		defer rows.Close()
+	}
 
 	for rows.Next() {
 		var column string
