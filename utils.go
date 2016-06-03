@@ -59,8 +59,8 @@ var intToWordMap = []string{
 	"nine",
 }
 
-// Generate Given a JSON string representation of an object and a name structName,
-// attemp to generate a struct definition
+// Generate Given a Column map with datatypes and a name structName,
+// attempts to generate a struct definition
 func Generate(columnTypes map[string]map[string]string, structName string, pkgName string) ([]byte, error) {
 	src := fmt.Sprintf("package %s\ntype %s %s}",
 		pkgName,

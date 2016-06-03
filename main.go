@@ -40,10 +40,13 @@ func init() {
 
 func main() {
 
+	// Username is required
 	if mariadbUser == nil || *mariadbUser == "user" {
 		fmt.Println("Username is required! Add it with --user=name")
 		return
 	}
+
+	// If a mariadb host is passed use it
 	if mariadbHostPassed != nil && *mariadbHostPassed != "" {
 		mariadbHost = *mariadbHostPassed
 	}
@@ -82,12 +85,15 @@ func main() {
 	}
 	defer db.Close()
 
+	// Check for error in db, note this does not check connectivity but does check uri
 	if err != nil {
 		fmt.Println("Error opening mysql db: " + err.Error())
 		return
 	}
 
+	// Store colum as map of maps
 	columnDataTypes := make(map[string]map[string]string)
+	// Select columnd data from INFORMATION_SCHEMA
 	columnDataTypeQuery := "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
 
 	if *verbose {
@@ -111,6 +117,7 @@ func main() {
 		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable}
 	}
 
+	// Generate struct string based on columnDataTypes
 	struc, err := Generate(columnDataTypes, *structName, *packageName)
 
 	if err != nil {
