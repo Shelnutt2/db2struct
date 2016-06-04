@@ -1,4 +1,4 @@
-package main
+package mysql
 
 import (
 	"testing"
@@ -16,7 +16,7 @@ type testStruct struct {
 `
 
 	columnMap := map[string]map[string]string{"stringColumn": {"nullable": "NO", "value": "varchar"}}
-	bytes, err := Generate(columnMap, "testStruct", "test")
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)

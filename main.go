@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/Shelnutt2/mysql-to-struct/mysql"
 	goopt "github.com/droundy/goopt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/howeyc/gopass"
@@ -23,6 +24,7 @@ var packageName = goopt.String([]string{"--package"}, "", "name to set for packa
 var structName = goopt.String([]string{"--struct"}, "", "name to set for struct")
 
 var jsonAnnotation = goopt.Flag([]string{"--json"}, []string{"--no-json"}, "Add json annotations (default)", "Disable json annotations")
+var gormAnnotation = goopt.Flag([]string{"--gorm"}, []string{}, "Add gorm annotations (tags)", "")
 
 func init() {
 	goopt.OptArg([]string{"-p", "--password"}, "", "Mysql password", getMariadbPassword)
@@ -122,7 +124,7 @@ func main() {
 	}
 
 	// Generate struct string based on columnDataTypes
-	struc, err := Generate(columnDataTypes, *structName, *packageName)
+	struc, err := mysql.Generate(columnDataTypes, *structName, *packageName, *jsonAnnotation, *gormAnnotation)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())

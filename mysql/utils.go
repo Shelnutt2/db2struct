@@ -1,4 +1,4 @@
-package main
+package mysql
 
 import (
 	"fmt"
@@ -61,11 +61,11 @@ var intToWordMap = []string{
 
 // Generate Given a Column map with datatypes and a name structName,
 // attempts to generate a struct definition
-func Generate(columnTypes map[string]map[string]string, structName string, pkgName string) ([]byte, error) {
+func Generate(columnTypes map[string]map[string]string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool) ([]byte, error) {
 	src := fmt.Sprintf("package %s\ntype %s %s}",
 		pkgName,
 		structName,
-		generateTypes(columnTypes, 0))
+		generateTypes(columnTypes, 0, jsonAnnotation, gormAnnotation))
 	formatted, err := format.Source([]byte(src))
 	if err != nil {
 		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
@@ -74,7 +74,7 @@ func Generate(columnTypes map[string]map[string]string, structName string, pkgNa
 }
 
 // Generate go struct entries for a map[string]interface{} structure
-func generateTypes(obj map[string]map[string]string, depth int) string {
+func generateTypes(obj map[string]map[string]string, depth int, jsonAnnotation bool, gormAnnotation bool) string {
 	structure := "struct {"
 
 	keys := make([]string, 0, len(obj))
@@ -93,7 +93,10 @@ func generateTypes(obj map[string]map[string]string, depth int) string {
 
 		fieldName := fmtFieldName(stringifyFirstChar(key))
 		var annotations []string
-		if *jsonAnnotation == true {
+		if gormAnnotation == true {
+			annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s\"", key))
+		}
+		if jsonAnnotation == true {
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
 		}
 		if len(annotations) > 0 {
