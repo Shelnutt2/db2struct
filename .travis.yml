@@ -1,0 +1,6 @@
+language: go
+addons:
+  mariadb: '10.1'
+go:
+  - 1.5
+  - tip

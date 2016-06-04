@@ -1,4 +1,4 @@
-# mysql-to-struct
+# mysql-to-struct [![Build Status](https://travis-ci.org/Shelnutt2/mysql-to-struct.svg?branch=master)](https://travis-ci.org/Shelnutt2/mysql-to-struct)
 
 This package produces a golang struct from a mysql table.
 
