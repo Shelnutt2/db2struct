@@ -22,6 +22,8 @@ var verbose = goopt.Flag([]string{"-v", "--verbose"}, []string{}, "Enable verbos
 var packageName = goopt.String([]string{"--package"}, "", "name to set for package")
 var structName = goopt.String([]string{"--struct"}, "", "name to set for struct")
 
+var jsonAnnotation = goopt.Flag([]string{"--json"}, []string{"--no-json"}, "Add json annotations (default)", "Disable json annotations")
+
 func init() {
 	goopt.OptArg([]string{"-p", "--password"}, "", "Mysql password", getMariadbPassword)
 	//goopt.ReqArg([]string{"-u", "--user"}, "user", "user to connect to database", setUser)

@@ -92,10 +92,21 @@ func generateTypes(obj map[string]map[string]string, depth int) string {
 		valueType := mysqlTypeToGoType(mysqlType["value"], nullable)
 
 		fieldName := fmtFieldName(stringifyFirstChar(key))
-		structure += fmt.Sprintf("\n%s %s `json:\"%s\"`",
-			fieldName,
-			valueType,
-			key)
+		var annotations []string
+		if *jsonAnnotation == true {
+			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
+		}
+		if len(annotations) > 0 {
+			structure += fmt.Sprintf("\n%s %s `%s`",
+				fieldName,
+				valueType,
+				strings.Join(annotations, " "))
+
+		} else {
+			structure += fmt.Sprintf("\n%s %s",
+				fieldName,
+				valueType)
+		}
 	}
 	return structure
 }
