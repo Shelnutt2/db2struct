@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Shelnutt2/mysql-to-struct/mysql"
+	"github.com/shelnutt2/db2struct"
 	goopt "github.com/droundy/goopt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/howeyc/gopass"
@@ -35,7 +35,7 @@ func init() {
 		return "Mariadb http Check"
 	}
 	goopt.Version = "0.0.2"
-	goopt.Summary = "mysql-to-struct [-H] [-p] [-v] --package pkgName --struct structName --database databaseName --table tableName"
+	goopt.Summary = "db2struct [-H] [-p] [-v] --package pkgName --struct structName --database databaseName --table tableName"
 
 	//Parse options
 	goopt.Parse(nil)
@@ -124,7 +124,7 @@ func main() {
 	}
 
 	// Generate struct string based on columnDataTypes
-	struc, err := mysql.Generate(columnDataTypes, *structName, *packageName, *jsonAnnotation, *gormAnnotation)
+	struc, err := db2struct.Generate(columnDataTypes, *structName, *packageName, *jsonAnnotation, *gormAnnotation)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())

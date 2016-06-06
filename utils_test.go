@@ -1,4 +1,4 @@
-package mysql
+package db2struct
 
 import (
 	"testing"

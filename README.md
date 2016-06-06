@@ -1,9 +1,9 @@
-# mysql-to-struct [![Build Status](https://travis-ci.org/Shelnutt2/mysql-to-struct.svg?branch=master)](https://travis-ci.org/Shelnutt2/mysql-to-struct)
+# db2struct [![Build Status](https://travis-ci.org/Shelnutt2/db2struct.svg?branch=master)](https://travis-ci.org/Shelnutt2/db2struct)
 
-This package produces a golang struct from a mysql table.
+This package produces a golang struct from a db table.
 
-It reads details from the INFORMATION_SCHEMA.Columns about the column struct
-of the table.
+It reads details from the database about the column structure.
+
 
 This is based on the work by ChimeraCoder with
 [gojson](https://github.com/ChimeraCoder/gojson)
@@ -11,11 +11,20 @@ This is based on the work by ChimeraCoder with
 ## Usage
 
 ```BASH
-go get github.com/Shelnutt2/mysql-to-struct
-mysql-to-struct --host localhost -d test -t test_table --package myGoPackage --struct testTable -p --user testUser
+go get github.com/Shelnutt2/db2struct/db2struct
+db2struct --host localhost -d test -t test_table --package myGoPackage --struct testTable -p --user testUser
 ```
+## Supported Database
 
-## Supported Datatypes
+Right now Only Mariadb/Mysql is supported, long term plans are to support
+postgres and others.
+
+### Mariadb
+
+Structures are created by querying the INFORMATION_SCHEMA.Columns and returning details.
+
+
+#### Supported Datatypes
 
 Currently only a small portion of mariadb datatypes are supported.
 
