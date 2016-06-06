@@ -153,3 +153,23 @@ type testStruct struct {
 		So(string(bytes), ShouldEqual, expectedStruct)
 	})
 }
+
+func TestMysqlStringWithIntGenerate(t *testing.T) {
+	expectedStruct :=
+		`package test
+
+type testStruct struct {
+	OneStringColumn string
+}
+`
+
+	columnMap := map[string]map[string]string{
+		"1stringColumn": {"nullable": "NO", "value": "varchar"},
+	}
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+}
