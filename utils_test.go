@@ -109,3 +109,47 @@ type testStruct struct {
 		So(string(bytes), ShouldEqual, expectedStruct)
 	})
 }
+
+func TestMysqlJSONStringGenerate(t *testing.T) {
+	expectedStruct :=
+		`package test
+
+type testStruct struct {
+	NullStringColumn sql.NullString ` + "`json:\"nullStringColumn\"`" + `
+	StringColumn     string         ` + "`json:\"stringColumn\"`" + `
+}
+`
+
+	columnMap := map[string]map[string]string{
+		"stringColumn":     {"nullable": "NO", "value": "varchar"},
+		"nullStringColumn": {"nullable": "YES", "value": "varchar"},
+	}
+	bytes, err := Generate(columnMap, "testStruct", "test", true, false)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+}
+
+func TestMysqlGormStringGenerate(t *testing.T) {
+	expectedStruct :=
+		`package test
+
+type testStruct struct {
+	NullStringColumn sql.NullString ` + "`gorm:\"column:nullStringColumn\"`" + `
+	StringColumn     string         ` + "`gorm:\"column:stringColumn\"`" + `
+}
+`
+
+	columnMap := map[string]map[string]string{
+		"stringColumn":     {"nullable": "NO", "value": "varchar"},
+		"nullStringColumn": {"nullable": "YES", "value": "varchar"},
+	}
+	bytes, err := Generate(columnMap, "testStruct", "test", false, true)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+}
