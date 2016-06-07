@@ -173,3 +173,43 @@ type testStruct struct {
 		So(string(bytes), ShouldEqual, expectedStruct)
 	})
 }
+
+func TestMysqlStringWithUnderscoresGenerate(t *testing.T) {
+	expectedStruct :=
+		`package test
+
+type testStruct struct {
+	StringColumn string
+}
+`
+
+	columnMap := map[string]map[string]string{
+		"string_Column": {"nullable": "NO", "value": "varchar"},
+	}
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+}
+
+func TestMysqlStringWithCommonInitialismGenerate(t *testing.T) {
+	expectedStruct :=
+		`package test
+
+type testStruct struct {
+	API string
+}
+`
+
+	columnMap := map[string]map[string]string{
+		"API": {"nullable": "NO", "value": "varchar"},
+	}
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+}
