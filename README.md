@@ -30,6 +30,7 @@ Currently only a small portion of mariadb datatypes are supported.
 
 Were applicable sql.Null versions are also supported
 
+-   tinyint
 -   int
 -   bigint
 -   decimal

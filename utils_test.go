@@ -89,18 +89,22 @@ func TestMysqlIntGenerate(t *testing.T) {
 		`package test
 
 type testStruct struct {
-	BigIntColumn     int64
-	IntColumn        int
-	NullBigIntColumn sql.NullInt64
-	NullIntColumn    sql.NullInt64
+	BigIntColumn      int64
+	IntColumn         int
+	NullBigIntColumn  sql.NullInt64
+	NullIntColumn     sql.NullInt64
+	NullTinyIntColumn sql.NullInt64
+	TinyIntColumn     int
 }
 `
 
 	columnMap := map[string]map[string]string{
-		"intColumn":        {"nullable": "NO", "value": "int"},
-		"nullIntColumn":    {"nullable": "YES", "value": "int"},
-		"bigIntColumn":     {"nullable": "NO", "value": "bigint"},
-		"nullBigIntColumn": {"nullable": "YES", "value": "bigint"},
+		"intColumn":         {"nullable": "NO", "value": "int"},
+		"nullIntColumn":     {"nullable": "YES", "value": "int"},
+		"tinyIntColumn":     {"nullable": "NO", "value": "tinyint"},
+		"nullTinyIntColumn": {"nullable": "YES", "value": "tinyint"},
+		"bigIntColumn":      {"nullable": "NO", "value": "bigint"},
+		"nullBigIntColumn":  {"nullable": "YES", "value": "bigint"},
 	}
 	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
 
