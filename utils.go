@@ -226,6 +226,11 @@ func stringifyFirstChar(str string) string {
 // mysqlTypeToGoType makes mysql to go
 func mysqlTypeToGoType(mysqlType string, nullable bool) string {
 	switch mysqlType {
+	case "tinyint":
+		if nullable {
+			return "sql.NullInt64"
+		}
+		return "int"
 	case "int":
 		if nullable {
 			return "sql.NullInt64"
