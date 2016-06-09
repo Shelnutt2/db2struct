@@ -61,11 +61,18 @@ var intToWordMap = []string{
 
 // Generate Given a Column map with datatypes and a name structName,
 // attempts to generate a struct definition
-func Generate(columnTypes map[string]map[string]string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) ([]byte, error) {
+func Generate(columnTypes map[string]map[string]string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) ([]byte, error) {
 	src := fmt.Sprintf("package %s\ntype %s %s}",
 		pkgName,
 		structName,
 		generateTypes(columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes))
+	if gormAnnotation == true {
+		tableNameFunc := "// TableName sets the insert table name for this struct type\n" +
+			"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") TableName() string {\n" +
+			"	return \"" + tableName + "\"" +
+			"}"
+		src = fmt.Sprintf("%s\n%s", src, tableNameFunc)
+	}
 	formatted, err := format.Source([]byte(src))
 	if err != nil {
 		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
