@@ -217,3 +217,45 @@ type testStruct struct {
 		So(string(bytes), ShouldEqual, expectedStruct)
 	})
 }
+
+// TestMysqlTypeToGureguType generates the struct and outputs nullable columns as guregu null types
+func TestMysqlTypeToGureguType(t *testing.T) {
+	expectedStruct :=
+		`package test
+
+type testStruct struct {
+	BigInt    int64
+	Date      null.Time
+	DateTime  null.Time
+	Decimal   null.Float
+	Double    float64
+	Float     null.Float
+	Int       null.Int
+	Time      time.Time
+	TimeStamp null.Time
+	TinyInt   int
+	VarChar   null.String
+}
+`
+
+	columnMap := map[string]map[string]string{
+		"VarChar":   {"nullable": "YES", "value": "varchar"},
+		"TinyInt":   {"nullable": "NO", "value": "tinyint"},
+		"Int":       {"nullable": "YES", "value": "int"},
+		"BigInt":    {"nullable": "NO", "value": "bigint"},
+		"Decimal":   {"nullable": "YES", "value": "decimal"},
+		"Float":     {"nullable": "YES", "value": "float"},
+		"Double":    {"nullable": "NO", "value": "double"},
+		"DateTime":  {"nullable": "YES", "value": "datetime"},
+		"Time":      {"nullable": "NO", "value": "time"},
+		"Date":      {"nullable": "YES", "value": "date"},
+		"TimeStamp": {"nullable": "YES", "value": "timestamp"},
+	}
+
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, true)
+
+	Convey("Should be able to generate map for guregu types", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+}
