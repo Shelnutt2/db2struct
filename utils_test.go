@@ -20,7 +20,7 @@ type testStruct struct {
 		"stringColumn":     {"nullable": "NO", "value": "varchar"},
 		"nullStringColumn": {"nullable": "YES", "value": "varchar"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -46,7 +46,7 @@ type testStruct struct {
 		"TimeColumn":      {"nullable": "NO", "value": "time"},
 		"TimeStampColumn": {"nullable": "NO", "value": "timestamp"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -76,7 +76,7 @@ type testStruct struct {
 		"decimalColumn":     {"nullable": "NO", "value": "decimal"},
 		"nullDecimalColumn": {"nullable": "YES", "value": "decimal"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -106,7 +106,7 @@ type testStruct struct {
 		"bigIntColumn":      {"nullable": "NO", "value": "bigint"},
 		"nullBigIntColumn":  {"nullable": "YES", "value": "bigint"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -128,7 +128,7 @@ type testStruct struct {
 		"stringColumn":     {"nullable": "NO", "value": "varchar"},
 		"nullStringColumn": {"nullable": "YES", "value": "varchar"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", true, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", true, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -150,7 +150,7 @@ type testStruct struct {
 		"stringColumn":     {"nullable": "NO", "value": "varchar"},
 		"nullStringColumn": {"nullable": "YES", "value": "varchar"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, true)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, true, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -170,7 +170,7 @@ type testStruct struct {
 	columnMap := map[string]map[string]string{
 		"1stringColumn": {"nullable": "NO", "value": "varchar"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -190,7 +190,7 @@ type testStruct struct {
 	columnMap := map[string]map[string]string{
 		"string_Column": {"nullable": "NO", "value": "varchar"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -210,7 +210,7 @@ type testStruct struct {
 	columnMap := map[string]map[string]string{
 		"API": {"nullable": "NO", "value": "varchar"},
 	}
-	bytes, err := Generate(columnMap, "testStruct", "test", false, false)
+	bytes, err := Generate(columnMap, "testStruct", "test", false, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
