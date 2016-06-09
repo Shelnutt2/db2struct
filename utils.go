@@ -61,11 +61,11 @@ var intToWordMap = []string{
 
 // Generate Given a Column map with datatypes and a name structName,
 // attempts to generate a struct definition
-func Generate(columnTypes map[string]map[string]string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool) ([]byte, error) {
+func Generate(columnTypes map[string]map[string]string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) ([]byte, error) {
 	src := fmt.Sprintf("package %s\ntype %s %s}",
 		pkgName,
 		structName,
-		generateTypes(columnTypes, 0, jsonAnnotation, gormAnnotation))
+		generateTypes(columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes))
 	formatted, err := format.Source([]byte(src))
 	if err != nil {
 		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
@@ -74,7 +74,7 @@ func Generate(columnTypes map[string]map[string]string, structName string, pkgNa
 }
 
 // Generate go struct entries for a map[string]interface{} structure
-func generateTypes(obj map[string]map[string]string, depth int, jsonAnnotation bool, gormAnnotation bool) string {
+func generateTypes(obj map[string]map[string]string, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) string {
 	structure := "struct {"
 
 	keys := make([]string, 0, len(obj))
@@ -89,7 +89,15 @@ func generateTypes(obj map[string]map[string]string, depth int, jsonAnnotation b
 		if mysqlType["nullable"] == "YES" {
 			nullable = true
 		}
-		valueType := mysqlTypeToGoType(mysqlType["value"], nullable)
+
+		// Get the corresponding go value type for this mysql type
+		var valueType string
+		// If the guregu (https://github.com/guregu/null) CLI option is passed use its types, otherwise use go's sql.NullX
+		if gureguTypes == true {
+			valueType = mysqlTypeToGureguType(mysqlType["value"], nullable)
+		} else {
+			valueType = mysqlTypeToGoType(mysqlType["value"], nullable)
+		}
 
 		fieldName := fmtFieldName(stringifyFirstChar(key))
 		var annotations []string
@@ -223,7 +231,7 @@ func stringifyFirstChar(str string) string {
 	return intToWordMap[i] + "_" + str[1:]
 }
 
-// mysqlTypeToGoType makes mysql to go
+// mysqlTypeToGoType converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
 func mysqlTypeToGoType(mysqlType string, nullable bool) string {
 	switch mysqlType {
 	case "tinyint":
@@ -267,6 +275,57 @@ func mysqlTypeToGoType(mysqlType string, nullable bool) string {
 	case "double":
 		if nullable {
 			return "sql.NullFloat64"
+		}
+		return "float64"
+	}
+
+	return ""
+}
+
+// mysqlTypeToGureguType converts the mysql types to go compatible guregu (https://github.com/guregu/null) types
+func mysqlTypeToGureguType(mysqlType string, nullable bool) string {
+	switch mysqlType {
+	case "tinyint":
+		if nullable {
+			return "null.Int"
+		}
+		return "int"
+	case "int":
+		if nullable {
+			return "null.Int"
+		}
+		return "int"
+	case "bigint":
+		if nullable {
+			return "null.Int"
+		}
+		return "int64"
+	case "varchar":
+		if nullable {
+			return "null.String"
+		}
+		return "string"
+	case "datetime":
+		return "time.Time"
+	case "date":
+		return "time.Time"
+	case "time":
+		return "time.Time"
+	case "timestamp":
+		return "time.Time"
+	case "decimal":
+		if nullable {
+			return "null.Float"
+		}
+		return "float64"
+	case "float":
+		if nullable {
+			return "null.Float"
+		}
+		return "float32"
+	case "double":
+		if nullable {
+			return "null.Float"
 		}
 		return "float64"
 	}
