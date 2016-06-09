@@ -306,12 +306,24 @@ func mysqlTypeToGureguType(mysqlType string, nullable bool) string {
 		}
 		return "string"
 	case "datetime":
+		if nullable {
+			return "null.Time"
+		}
 		return "time.Time"
 	case "date":
+		if nullable {
+			return "null.Time"
+		}
 		return "time.Time"
 	case "time":
+		if nullable {
+			return "null.Time"
+		}
 		return "time.Time"
 	case "timestamp":
+		if nullable {
+			return "null.Time"
+		}
 		return "time.Time"
 	case "decimal":
 		if nullable {
