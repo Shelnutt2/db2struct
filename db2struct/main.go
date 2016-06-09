@@ -125,7 +125,7 @@ func main() {
 	}
 
 	// Generate struct string based on columnDataTypes
-	struc, err := db2struct.Generate(columnDataTypes, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *gureguTypes)
+	struc, err := db2struct.Generate(columnDataTypes, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *gureguTypes)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())
