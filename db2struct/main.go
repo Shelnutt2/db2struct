@@ -124,6 +124,12 @@ func main() {
 		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable}
 	}
 
+	if structName == nil || *structName == "" {
+		*structName = "newstruct"
+	}
+	if packageName == nil || *packageName == "" {
+		*packageName = "newpackage"
+	}
 	// Generate struct string based on columnDataTypes
 	struc, err := db2struct.Generate(columnDataTypes, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *gureguTypes)
 
