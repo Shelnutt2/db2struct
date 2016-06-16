@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"strconv"
@@ -81,60 +80,27 @@ func main() {
 		return
 	}
 
-	var err error
-	var db *sql.DB
-	if mariadbPassword != nil {
-		db, err = sql.Open("mysql", *mariadbUser+":"+*mariadbPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(*mariadbPort)+")/"+*mariadbDatabase+"?&parseTime=True")
-	} else {
-		db, err = sql.Open("mysql", *mariadbUser+"@tcp("+mariadbHost+":"+strconv.Itoa(*mariadbPort)+")/"+*mariadbDatabase+"?&parseTime=True")
-	}
-	defer db.Close()
+	columnDataTypes, err := db2struct.GetColumnsFromMysqlTable(*mariadbUser, *mariadbPassword, mariadbHost, *mariadbPort, *mariadbDatabase, *mariadbTable)
 
-	// Check for error in db, note this does not check connectivity but does check uri
 	if err != nil {
-		fmt.Println("Error opening mysql db: " + err.Error())
+		fmt.Println("Error in selecting column data information from mysql information schema")
 		return
 	}
 
-	// Store colum as map of maps
-	columnDataTypes := make(map[string]map[string]string)
-	// Select columnd data from INFORMATION_SCHEMA
-	columnDataTypeQuery := "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
-
-	if *verbose {
-		fmt.Println("running: " + columnDataTypeQuery)
-	}
-
-	rows, err := db.Query(columnDataTypeQuery, *mariadbDatabase, *mariadbTable)
-
-	if err != nil {
-		fmt.Println("Error selecting from db: " + err.Error())
-		return
-	}
-	if db != nil {
-		defer rows.Close()
-	}
-
-	for rows.Next() {
-		var column string
-		var dataType string
-		var nullable string
-		rows.Scan(&column, &dataType, &nullable)
-
-		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable}
-	}
-
+	// If structName is not set we need to default it
 	if structName == nil || *structName == "" {
 		*structName = "newstruct"
 	}
+	// If packageName is not set we need to default it
 	if packageName == nil || *packageName == "" {
 		*packageName = "newpackage"
 	}
 	// Generate struct string based on columnDataTypes
-	struc, err := db2struct.Generate(columnDataTypes, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *gureguTypes)
+	struc, err := db2struct.Generate(*columnDataTypes, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *gureguTypes)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())
+		return
 	}
 
 	fmt.Println(string(struc))
