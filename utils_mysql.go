@@ -2,6 +2,7 @@ package db2struct
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -41,8 +42,10 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 		fmt.Println("Error selecting from db: " + err.Error())
 		return nil, err
 	}
-	if db != nil {
+	if rows != nil {
 		defer rows.Close()
+	} else {
+		return nil, errors.New("No results returned for table")
 	}
 
 	for rows.Next() {
