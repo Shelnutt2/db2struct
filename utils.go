@@ -8,6 +8,23 @@ import (
 	"unicode"
 )
 
+// Constants for return types of golang
+const (
+	gureguNullInt    = "null.Int"
+	sqlNullInt       = "sql.NullInt64"
+	golangInt        = "int"
+	golangInt64      = "int64"
+	gureguNullFloat  = "null.Float"
+	sqlNullFloat     = "sql.NullFloat64"
+	golangFloat      = "float"
+	golangFloat32    = "float32"
+	golangFloat64    = "float64"
+	gureguNullString = "null.String"
+	sqlNullString    = "sql.NullString"
+	gureguNullTime   = "null.Time"
+	golangTime       = "time.Time"
+)
+
 // commonInitialisms is a set of common initialisms.
 // Only add entries that are highly unlikely to be non-initialisms.
 // For instance, "ID" is fine (Freudian code is rare), but "AND" is not.

@@ -80,11 +80,8 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 		// Get the corresponding go value type for this mysql type
 		var valueType string
 		// If the guregu (https://github.com/guregu/null) CLI option is passed use its types, otherwise use go's sql.NullX
-		if gureguTypes == true {
-			valueType = mysqlTypeToGureguType(mysqlType["value"], nullable)
-		} else {
-			valueType = mysqlTypeToGoType(mysqlType["value"], nullable)
-		}
+
+		valueType = mysqlTypeToGoType(mysqlType["value"], nullable, gureguTypes)
 
 		fieldName := fmtFieldName(stringifyFirstChar(key))
 		var annotations []string
@@ -110,114 +107,84 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 }
 
 // mysqlTypeToGoType converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
-func mysqlTypeToGoType(mysqlType string, nullable bool) string {
+func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 	switch mysqlType {
 	case "tinyint":
 		if nullable {
-			return "sql.NullInt64"
+			if gureguTypes {
+				return gureguNullInt
+			}
+			return sqlNullInt
 		}
-		return "int"
+		return golangInt
 	case "int":
 		if nullable {
-			return "sql.NullInt64"
+			if gureguTypes {
+				return gureguNullInt
+			}
+			return sqlNullInt
 		}
-		return "int"
+		return golangInt
 	case "bigint":
 		if nullable {
-			return "sql.NullInt64"
+			if gureguTypes {
+				return gureguNullInt
+			}
+			return sqlNullInt
 		}
-		return "int64"
+		return golangInt64
 	case "varchar":
 		if nullable {
-			return "sql.NullString"
+			if gureguTypes {
+				return gureguNullString
+			}
+			return sqlNullString
 		}
 		return "string"
 	case "datetime":
-		return "time.Time"
+		if nullable && gureguTypes {
+			return gureguNullTime
+		}
+		return golangTime
 	case "date":
-		return "time.Time"
+		if nullable && gureguTypes {
+			return gureguNullTime
+		}
+		return golangTime
 	case "time":
-		return "time.Time"
+		if nullable && gureguTypes {
+			return gureguNullTime
+		}
+		return golangTime
 	case "timestamp":
-		return "time.Time"
+		if nullable && gureguTypes {
+			return gureguNullTime
+		}
+		return golangTime
 	case "decimal":
 		if nullable {
-			return "sql.NullFloat64"
+			if gureguTypes {
+				return gureguNullFloat
+			}
+			return sqlNullFloat
 		}
-		return "float64"
+		return golangFloat64
 	case "float":
 		if nullable {
-			return "sql.NullFloat64"
+			if gureguTypes {
+				return gureguNullFloat
+			}
+			return sqlNullFloat
 		}
-		return "float32"
+		return golangFloat32
 	case "double":
 		if nullable {
-			return "sql.NullFloat64"
+			if gureguTypes {
+				return gureguNullFloat
+			}
+			return sqlNullFloat
 		}
-		return "float64"
-	}
-
-	return ""
-}
-
-// mysqlTypeToGureguType converts the mysql types to go compatible guregu (https://github.com/guregu/null) types
-func mysqlTypeToGureguType(mysqlType string, nullable bool) string {
-	switch mysqlType {
-	case "tinyint":
-		if nullable {
-			return "null.Int"
-		}
-		return "int"
-	case "int":
-		if nullable {
-			return "null.Int"
-		}
-		return "int"
-	case "bigint":
-		if nullable {
-			return "null.Int"
-		}
-		return "int64"
-	case "varchar":
-		if nullable {
-			return "null.String"
-		}
-		return "string"
-	case "datetime":
-		if nullable {
-			return "null.Time"
-		}
-		return "time.Time"
-	case "date":
-		if nullable {
-			return "null.Time"
-		}
-		return "time.Time"
-	case "time":
-		if nullable {
-			return "null.Time"
-		}
-		return "time.Time"
-	case "timestamp":
-		if nullable {
-			return "null.Time"
-		}
-		return "time.Time"
-	case "decimal":
-		if nullable {
-			return "null.Float"
-		}
-		return "float64"
-	case "float":
-		if nullable {
-			return "null.Float"
-		}
-		return "float32"
-	case "double":
-		if nullable {
-			return "null.Float"
-		}
-		return "float64"
+		return golangFloat64
 	}
 
 	return ""
