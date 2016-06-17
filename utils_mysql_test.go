@@ -21,4 +21,10 @@ func TestGetColumnsFromMysqlTable(t *testing.T) {
 		So(columMap, ShouldNotBeNil)
 		So(*columMap, ShouldNotBeEmpty)
 	})
+
+	columMap, err = GetColumnsFromMysqlTable(testMariadbUsername, testMariadbPassword, "doesnotexists", testMariadbPort, testMariadbDatabase, testTable)
+	Convey("Should get an error connecting to test database", t, func() {
+		So(err, ShouldNotBeNil)
+		So(columMap, ShouldBeNil)
+	})
 }
