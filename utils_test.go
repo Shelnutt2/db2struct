@@ -6,6 +6,18 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func TestLintFieldName(t *testing.T) {
+	name := lintFieldName("_")
+	Convey("Should get underscore as fieldName", t, func() {
+		So(name, ShouldEqual, "_")
+	})
+
+	name = lintFieldName("foo_id")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "FooID")
+	})
+}
+
 func TestMysqlStringGenerate(t *testing.T) {
 	expectedStruct :=
 		`package test
