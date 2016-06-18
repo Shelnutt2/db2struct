@@ -16,6 +16,26 @@ func TestLintFieldName(t *testing.T) {
 	Convey("Should be able to convert field name", t, func() {
 		So(name, ShouldEqual, "FooID")
 	})
+
+	name = lintFieldName("foo__id")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "FooID")
+	})
+
+	name = lintFieldName("1__2")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "1_2")
+	})
+
+	name = lintFieldName("_id")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "ID")
+	})
+
+	name = lintFieldName("foo")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "Foo")
+	})
 }
 
 func TestMysqlStringGenerate(t *testing.T) {
