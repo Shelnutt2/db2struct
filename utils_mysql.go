@@ -109,7 +109,7 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 // mysqlTypeToGoType converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
 func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 	switch mysqlType {
-	case "tinyint", "int":
+	case "tinyint", "int", "smallint", "mediumint":
 		if nullable {
 			if gureguTypes {
 				return gureguNullInt
@@ -125,7 +125,7 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string
 			return sqlNullInt
 		}
 		return golangInt64
-	case "varchar", "char":
+	case "char", "enum", "varchar", "longtext", "mediumtext", "text", "tinytext":
 		if nullable {
 			if gureguTypes {
 				return gureguNullString
@@ -154,6 +154,8 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string
 			return sqlNullFloat
 		}
 		return golangFloat32
+	case "binary", "blob", "longblob", "mediumblob", "varbinary":
+		return golangByteArray
 	}
 	return ""
 }

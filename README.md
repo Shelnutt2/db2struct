@@ -63,6 +63,8 @@ and metadata to create a usable go compatible struct type.
 Currently only a limited number of MariaDB/MySQL datatypes are supported. Initial support includes:
 -  tinyint (sql.NullInt64 or null.Int)
 -  int      (sql.NullInt64 or null.Int)
+-  smallint      (sql.NullInt64 or null.Int)
+-  mediumint      (sql.NullInt64 or null.Int)
 -  bigint (sql.NullInt64 or null.Int)
 -  decimal (sql.NullFloat64 or null.Float)
 -  float (sql.NullFloat64 or null.Float)
@@ -71,3 +73,15 @@ Currently only a limited number of MariaDB/MySQL datatypes are supported. Initia
 -  time  (null.Time)
 -  date (null.Time)
 -  timestamp (null.Time)
+-  var (sql.String or null.String)
+-  enum (sql.String or null.String)
+-  varchar (sql.String or null.String)
+-  longtext (sql.String or null.String)
+-  mediumtext (sql.String or null.String)
+-  text (sql.String or null.String)
+-  tinytext (sql.String or null.String)
+-  binary
+-  blob
+-  longblob
+-  mediumblob
+-  varbinary
