@@ -109,15 +109,7 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 // mysqlTypeToGoType converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
 func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 	switch mysqlType {
-	case "tinyint":
-		if nullable {
-			if gureguTypes {
-				return gureguNullInt
-			}
-			return sqlNullInt
-		}
-		return golangInt
-	case "int":
+	case "tinyint", "int":
 		if nullable {
 			if gureguTypes {
 				return gureguNullInt
@@ -133,7 +125,7 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string
 			return sqlNullInt
 		}
 		return golangInt64
-	case "varchar":
+	case "varchar", "char":
 		if nullable {
 			if gureguTypes {
 				return gureguNullString
@@ -141,27 +133,12 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string
 			return sqlNullString
 		}
 		return "string"
-	case "datetime":
+	case "date", "datetime", "time", "timestamp":
 		if nullable && gureguTypes {
 			return gureguNullTime
 		}
 		return golangTime
-	case "date":
-		if nullable && gureguTypes {
-			return gureguNullTime
-		}
-		return golangTime
-	case "time":
-		if nullable && gureguTypes {
-			return gureguNullTime
-		}
-		return golangTime
-	case "timestamp":
-		if nullable && gureguTypes {
-			return gureguNullTime
-		}
-		return golangTime
-	case "decimal":
+	case "decimal", "double":
 		if nullable {
 			if gureguTypes {
 				return gureguNullFloat
@@ -177,15 +154,6 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string
 			return sqlNullFloat
 		}
 		return golangFloat32
-	case "double":
-		if nullable {
-			if gureguTypes {
-				return gureguNullFloat
-			}
-			return sqlNullFloat
-		}
-		return golangFloat64
 	}
-
 	return ""
 }
