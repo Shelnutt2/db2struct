@@ -6,6 +6,38 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func TestLintFieldName(t *testing.T) {
+	name := lintFieldName("_")
+	Convey("Should get underscore as fieldName", t, func() {
+		So(name, ShouldEqual, "_")
+	})
+
+	name = lintFieldName("foo_id")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "FooID")
+	})
+
+	name = lintFieldName("foo__id")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "FooID")
+	})
+
+	name = lintFieldName("1__2")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "1_2")
+	})
+
+	name = lintFieldName("_id")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "ID")
+	})
+
+	name = lintFieldName("foo")
+	Convey("Should be able to convert field name", t, func() {
+		So(name, ShouldEqual, "Foo")
+	})
+}
+
 func TestMysqlStringGenerate(t *testing.T) {
 	expectedStruct :=
 		`package test
@@ -28,23 +60,35 @@ type testStruct struct {
 	})
 }
 
-func TestMysqlDateGenerate(t *testing.T) {
+func TestMysqlBlobGenerate(t *testing.T) {
 	expectedStruct :=
 		`package test
 
 type testStruct struct {
-	DateColumn      time.Time
-	DateTimeColumn  time.Time
-	TimeColumn      time.Time
-	TimeStampColumn time.Time
+	BinaryColumn         []byte
+	BlobColumn           []byte
+	LongBlobColumn       []byte
+	MediumBlobColumn     []byte
+	NullBinaryColumn     []byte
+	NullBlobColumn       []byte
+	NullLongBlobColumn   []byte
+	NullMediumBlobColumn []byte
+	NullVarbinaryColumn  []byte
+	VarbinaryColumn      []byte
 }
 `
 
 	columnMap := map[string]map[string]string{
-		"DateColumn":      {"nullable": "NO", "value": "date"},
-		"DateTimeColumn":  {"nullable": "NO", "value": "datetime"},
-		"TimeColumn":      {"nullable": "NO", "value": "time"},
-		"TimeStampColumn": {"nullable": "NO", "value": "timestamp"},
+		"binaryColumn":         {"nullable": "NO", "value": "binary"},
+		"nullBinaryColumn":     {"nullable": "YES", "value": "binary"},
+		"blobColumn":           {"nullable": "NO", "value": "blob"},
+		"nullBlobColumn":       {"nullable": "YES", "value": "blob"},
+		"longBlobColumn":       {"nullable": "NO", "value": "longblob"},
+		"nullLongBlobColumn":   {"nullable": "YES", "value": "longblob"},
+		"mediumBlobColumn":     {"nullable": "NO", "value": "mediumblob"},
+		"nullMediumBlobColumn": {"nullable": "YES", "value": "mediumblob"},
+		"varbinaryColumn":      {"nullable": "NO", "value": "varbinary"},
+		"nullVarbinaryColumn":  {"nullable": "YES", "value": "varbinary"},
 	}
 	bytes, err := Generate(columnMap, "test_table", "testStruct", "test", false, false, false)
 
@@ -54,7 +98,74 @@ type testStruct struct {
 	})
 }
 
+func TestMysqlDateGenerate(t *testing.T) {
+	columnMap := map[string]map[string]string{
+		"DateColumn":          {"nullable": "NO", "value": "date"},
+		"nullDateColumn":      {"nullable": "YES", "value": "date"},
+		"DateTimeColumn":      {"nullable": "NO", "value": "datetime"},
+		"nullDateTimeColumn":  {"nullable": "YES", "value": "datetime"},
+		"TimeColumn":          {"nullable": "NO", "value": "time"},
+		"nullTimeColumn":      {"nullable": "YES", "value": "time"},
+		"TimeStampColumn":     {"nullable": "NO", "value": "timestamp"},
+		"nullTimeStampColumn": {"nullable": "YES", "value": "timestamp"},
+	}
+
+	expectedStruct :=
+		`package test
+
+type testStruct struct {
+	DateColumn          time.Time
+	DateTimeColumn      time.Time
+	TimeColumn          time.Time
+	TimeStampColumn     time.Time
+	NullDateColumn      time.Time
+	NullDateTimeColumn  time.Time
+	NullTimeColumn      time.Time
+	NullTimeStampColumn time.Time
+}
+`
+
+	bytes, err := Generate(columnMap, "test_table", "testStruct", "test", false, false, false)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+
+	expectedStruct =
+		`package test
+
+type testStruct struct {
+	DateColumn          time.Time
+	DateTimeColumn      time.Time
+	TimeColumn          time.Time
+	TimeStampColumn     time.Time
+	NullDateColumn      null.Time
+	NullDateTimeColumn  null.Time
+	NullTimeColumn      null.Time
+	NullTimeStampColumn null.Time
+}
+`
+
+	bytes, err = Generate(columnMap, "test_table", "testStruct", "test", false, false, true)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+}
+
 func TestMysqlFloatGenerate(t *testing.T) {
+
+	columnMap := map[string]map[string]string{
+		"floatColumn":       {"nullable": "NO", "value": "float"},
+		"nullFloatColumn":   {"nullable": "YES", "value": "float"},
+		"doubleColumn":      {"nullable": "NO", "value": "double"},
+		"nullDoubleColumn":  {"nullable": "YES", "value": "double"},
+		"decimalColumn":     {"nullable": "NO", "value": "decimal"},
+		"nullDecimalColumn": {"nullable": "YES", "value": "decimal"},
+	}
+
 	expectedStruct :=
 		`package test
 
@@ -68,15 +179,27 @@ type testStruct struct {
 }
 `
 
-	columnMap := map[string]map[string]string{
-		"floatColumn":       {"nullable": "NO", "value": "float"},
-		"nullFloatColumn":   {"nullable": "YES", "value": "float"},
-		"doubleColumn":      {"nullable": "NO", "value": "double"},
-		"nullDoubleColumn":  {"nullable": "YES", "value": "double"},
-		"decimalColumn":     {"nullable": "NO", "value": "decimal"},
-		"nullDecimalColumn": {"nullable": "YES", "value": "decimal"},
-	}
 	bytes, err := Generate(columnMap, "test_table", "testStruct", "test", false, false, false)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+
+	expectedStruct =
+		`package test
+
+type testStruct struct {
+	DecimalColumn     float64
+	DoubleColumn      float64
+	FloatColumn       float32
+	NullDecimalColumn null.Float
+	NullDoubleColumn  null.Float
+	NullFloatColumn   null.Float
+}
+`
+
+	bytes, err = Generate(columnMap, "test_table", "testStruct", "test", false, false, true)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -85,28 +208,61 @@ type testStruct struct {
 }
 
 func TestMysqlIntGenerate(t *testing.T) {
+	columnMap := map[string]map[string]string{
+		"intColumn":           {"nullable": "NO", "value": "int"},
+		"nullIntColumn":       {"nullable": "YES", "value": "int"},
+		"tinyIntColumn":       {"nullable": "NO", "value": "tinyint"},
+		"nullTinyIntColumn":   {"nullable": "YES", "value": "tinyint"},
+		"smallIntColumn":      {"nullable": "NO", "value": "smallint"},
+		"nullSmallIntColumn":  {"nullable": "YES", "value": "smallint"},
+		"mediumIntColumn":     {"nullable": "NO", "value": "mediumint"},
+		"nullMediumIntColumn": {"nullable": "YES", "value": "mediumint"},
+		"bigIntColumn":        {"nullable": "NO", "value": "bigint"},
+		"nullBigIntColumn":    {"nullable": "YES", "value": "bigint"},
+	}
+
 	expectedStruct :=
 		`package test
 
 type testStruct struct {
-	BigIntColumn      int64
-	IntColumn         int
-	NullBigIntColumn  sql.NullInt64
-	NullIntColumn     sql.NullInt64
-	NullTinyIntColumn sql.NullInt64
-	TinyIntColumn     int
+	BigIntColumn        int64
+	IntColumn           int
+	MediumIntColumn     int
+	NullBigIntColumn    sql.NullInt64
+	NullIntColumn       sql.NullInt64
+	NullMediumIntColumn sql.NullInt64
+	NullSmallIntColumn  sql.NullInt64
+	NullTinyIntColumn   sql.NullInt64
+	SmallIntColumn      int
+	TinyIntColumn       int
 }
 `
 
-	columnMap := map[string]map[string]string{
-		"intColumn":         {"nullable": "NO", "value": "int"},
-		"nullIntColumn":     {"nullable": "YES", "value": "int"},
-		"tinyIntColumn":     {"nullable": "NO", "value": "tinyint"},
-		"nullTinyIntColumn": {"nullable": "YES", "value": "tinyint"},
-		"bigIntColumn":      {"nullable": "NO", "value": "bigint"},
-		"nullBigIntColumn":  {"nullable": "YES", "value": "bigint"},
-	}
 	bytes, err := Generate(columnMap, "test_table", "testStruct", "test", false, false, false)
+
+	Convey("Should be able to generate map from string column", t, func() {
+		So(err, ShouldBeNil)
+		So(string(bytes), ShouldEqual, expectedStruct)
+	})
+
+	expectedStruct =
+		`package test
+
+type testStruct struct {
+	BigIntColumn        int64
+	IntColumn           int
+	MediumIntColumn     int
+	NullBigIntColumn    null.Int
+	NullIntColumn       null.Int
+	NullMediumIntColumn null.Int
+	NullSmallIntColumn  null.Int
+	NullTinyIntColumn   null.Int
+	SmallIntColumn      int
+	TinyIntColumn       int
+}
+`
+
+	bytes, err = Generate(columnMap, "test_table", "testStruct", "test", false, false, true)
 
 	Convey("Should be able to generate map from string column", t, func() {
 		So(err, ShouldBeNil)
@@ -115,6 +271,11 @@ type testStruct struct {
 }
 
 func TestMysqlJSONStringGenerate(t *testing.T) {
+	columnMap := map[string]map[string]string{
+		"stringColumn":     {"nullable": "NO", "value": "varchar"},
+		"nullStringColumn": {"nullable": "YES", "value": "varchar"},
+	}
+
 	expectedStruct :=
 		`package test
 
@@ -124,10 +285,6 @@ type testStruct struct {
 }
 `
 
-	columnMap := map[string]map[string]string{
-		"stringColumn":     {"nullable": "NO", "value": "varchar"},
-		"nullStringColumn": {"nullable": "YES", "value": "varchar"},
-	}
 	bytes, err := Generate(columnMap, "test_table", "testStruct", "test", true, false, false)
 
 	Convey("Should be able to generate map from string column", t, func() {
