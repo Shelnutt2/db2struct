@@ -104,21 +104,17 @@ func main() {
 		return
 	}
 	if targetDirectory != nil {
-		file, er := os.Open(*targetDirectory)
-		defer func() { file.Close() }()
-		if er != nil && os.IsNotExist(err) {
-			f, err := os.Create(*targetDirectory)
-			if err != nil {
-				fmt.Println("Create File fail: " + err.Error())
-				return
-			}
-			length, err := f.WriteString(string(struc))
-			if err != nil {
-				fmt.Println("Save File fail: " + err.Error())
-				return
-			}
-			fmt.Printf("wrote %d bytes\n", length)
+		file, err := os.OpenFile(*targetDirectory, os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+		if err != nil {
+			fmt.Println("Open File fail: " + err.Error())
+			return
 		}
+		length, err := file.WriteString(string(struc))
+		if err != nil {
+			fmt.Println("Save File fail: " + err.Error())
+			return
+		}
+		fmt.Printf("wrote %d bytes\n", length)
 	} else {
 		fmt.Println(string(struc))
 	}
