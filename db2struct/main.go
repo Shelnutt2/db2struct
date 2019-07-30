@@ -25,7 +25,7 @@ var structName = goopt.String([]string{"--struct"}, "", "name to set for struct"
 var jsonAnnotation = goopt.Flag([]string{"--json"}, []string{"--no-json"}, "Add json annotations (default)", "Disable json annotations")
 var gormAnnotation = goopt.Flag([]string{"--gorm"}, []string{}, "Add gorm annotations (tags)", "")
 var gureguTypes = goopt.Flag([]string{"--guregu"}, []string{}, "Add guregu null types", "")
-var targetDirectory = goopt.String([]string{"--target"}, "", "Save file path")
+var targetFile = goopt.String([]string{"--target"}, "", "Save file path")
 
 func init() {
 	goopt.OptArg([]string{"-p", "--password"}, "", "Mysql password", getMariadbPassword)
@@ -106,8 +106,8 @@ func main() {
 		fmt.Println("Error in creating struct from json: " + err.Error())
 		return
 	}
-	if targetDirectory != nil {
-		file, err := os.OpenFile(*targetDirectory, os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+	if targetFile != nil && *targetFile != "" {
+		file, err := os.OpenFile(*targetFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			fmt.Println("Open File fail: " + err.Error())
 			return
