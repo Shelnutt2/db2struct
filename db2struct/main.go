@@ -65,6 +65,9 @@ func main() {
 			fmt.Println("Error reading password: " + err.Error())
 			return
 		}
+	} else if mariadbPassword == nil {
+		p := ""
+		mariadbPassword = &p
 	}
 
 	if *verbose {
