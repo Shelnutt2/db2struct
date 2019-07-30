@@ -1,6 +1,6 @@
 language: go
 addons:
-  mariadb: '10.1'
+  mariadb: '10.3'
 go:
   - tip
 before_install:

@@ -7,7 +7,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-const testMariadbUsername = "travis"
+const testMariadbUsername = "root"
 const testMariadbPassword = ""
 const testMariadbHost = "127.0.0.1"
 const testMariadbPort = 3306
