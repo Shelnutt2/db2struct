@@ -85,3 +85,4 @@ Currently only a limited number of MariaDB/MySQL datatypes are supported. Initia
 -   longblob
 -   mediumblob
 -   varbinary
+-   json
