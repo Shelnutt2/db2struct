@@ -131,7 +131,7 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string
 			return sqlNullInt
 		}
 		return golangInt64
-	case "char", "enum", "varchar", "longtext", "mediumtext", "text", "tinytext":
+	case "char", "enum", "varchar", "longtext", "mediumtext", "text", "tinytext", "json":
 		if nullable {
 			if gureguTypes {
 				return gureguNullString
