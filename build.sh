@@ -6,7 +6,7 @@ start_seconds=$(date +%s);
 
 #export CGO_ENABLED="0"
 export GO111MODULE=on
-go build -o $name  main.go
+go build -o $name  cmd/db2struct/main.go
 
 if [ $? -ne 0 ];then
   end_seconds=$(date +%s);

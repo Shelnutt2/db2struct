@@ -96,7 +96,8 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 			annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s%s\"", key, primary))
 		}
 		if jsonAnnotation == true {
-			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
+			res :=Lcfirst(Case2Camel(key))
+			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", res))
 		}
 		var note string
 		if mysqlType["comment"] != "" {
