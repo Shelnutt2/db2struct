@@ -11,18 +11,18 @@ import (
 // Constants for return types of golang
 const (
 	golangByteArray  = "[]byte"
-	gureguNullInt    = "null.Int"
-	sqlNullInt       = "sql.NullInt64"
+	gureguNullInt    = "int"
+	sqlNullInt       = "int64"
 	golangInt        = "int"
 	golangInt64      = "int64"
-	gureguNullFloat  = "null.Float"
-	sqlNullFloat     = "sql.NullFloat64"
+	gureguNullFloat  = "float"
+	sqlNullFloat     = "float64"
 	golangFloat      = "float"
 	golangFloat32    = "float32"
 	golangFloat64    = "float64"
-	gureguNullString = "null.String"
-	sqlNullString    = "sql.NullString"
-	gureguNullTime   = "null.Time"
+	gureguNullString = "string"
+	sqlNullString    = "string"
+	gureguNullTime   = "time.Time"
 	golangTime       = "time.Time"
 )
 
@@ -84,8 +84,16 @@ var Debug = false
 func Generate(columnTypes map[string]map[string]string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) ([]byte, error) {
 	var dbTypes string
 	dbTypes = generateMysqlTypes(columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
-	src := fmt.Sprintf("package %s\ntype %s %s}",
+
+	strImport:=`import (
+		"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	)`
+
+
+	src := fmt.Sprintf("package %s\n\n%s\n\ntype %s %s}",
 		pkgName,
+		strImport,
 		structName,
 		dbTypes)
 	if gormAnnotation == true {

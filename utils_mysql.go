@@ -64,7 +64,7 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 
 // Generate go struct entries for a map[string]interface{} structure
 func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) string {
-	structure := "struct {"
+	structure := "struct {\n\tgorm.Model"
 
 	keys := make([]string, 0, len(obj))
 	for key := range obj {
@@ -99,10 +99,23 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 			res :=Lcfirst(Case2Camel(key))
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", res))
 		}
+
+
 		var note string
 		if mysqlType["comment"] != "" {
 			note = fmt.Sprintf("  // %s", mysqlType["comment"])
 		}
+
+		var key string
+		keys:=strings.Split(mysqlType["comment"], " ")
+		if len(keys)>0 {
+			key = keys[0]
+		}else {
+			key = mysqlType["comment"]
+		}
+		annotations = append(annotations, fmt.Sprintf("key:\"%s\"",key ))
+
+
 		if len(annotations) > 0 {
 			structure += fmt.Sprintf("\n\t%s %s `%s` %s",
 				fieldName,
