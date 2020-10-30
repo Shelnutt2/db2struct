@@ -96,24 +96,26 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 			annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s%s\"", key, primary))
 		}
 		if jsonAnnotation == true {
-			res :=Lcfirst(Case2Camel(key))
+			res := Lcfirst(Case2Camel(key))
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", res))
 		}
-
 
 		var note string
 		if mysqlType["comment"] != "" {
 			note = fmt.Sprintf("  // %s", mysqlType["comment"])
 		}
 
-		var key string
-		keys:=strings.Split(mysqlType["comment"], " ")
-		if len(keys)>0 {
-			key = keys[0]
-		}else {
-			key = mysqlType["comment"]
+		keyAnnotation := false
+		if keyAnnotation == true {
+			var key string
+			keys := strings.Split(mysqlType["comment"], " ")
+			if len(keys) > 0 {
+				key = keys[0]
+			} else {
+				key = mysqlType["comment"]
+			}
+			annotations = append(annotations, fmt.Sprintf("key:\"%s\"", key))
 		}
-		annotations = append(annotations, fmt.Sprintf("key:\"%s\"",key ))
 
 
 		if len(annotations) > 0 {

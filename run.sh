@@ -16,7 +16,9 @@ function create() {
 echo "start..."
 
 
-create "mis_import_history" "MisImportHistory"
+#create "mis_import_history" "MisImportHistory"
+create "mis_flows" "MisFlows"
+create "mis_flow_Template" "MisFlowTemplate"
 
 echo "success, please open $path"
 
