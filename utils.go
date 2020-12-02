@@ -84,7 +84,7 @@ var Debug = false
 func Generate(columnTypes map[string]map[string]string, columnsSorted []string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) ([]byte, error) {
 	var dbTypes string
 	dbTypes = generateMysqlTypes(columnTypes, columnsSorted, 0, jsonAnnotation, gormAnnotation, gureguTypes)
-	src := fmt.Sprintf("package %s\ntype %s %s}",
+	src := fmt.Sprintf("package %s\ntype %s %s\n}",
 		pkgName,
 		structName,
 		dbTypes)

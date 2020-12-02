@@ -9,7 +9,7 @@ import (
 )
 
 // GetColumnsFromMysqlTable Select column details from information schema and return map of map
-func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string, mariadbTable string) (*map[string]map[string]string,  []string, error) {
+func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string, mariadbTable string) (*map[string]map[string]string, []string, error) {
 
 	var err error
 	var db *sql.DB
@@ -26,13 +26,12 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 		return nil, nil, err
 	}
 
-
-	columnNamesSorted:=[]string{}
+	columnNamesSorted := []string{}
 
 	// Store colum as map of maps
 	columnDataTypes := make(map[string]map[string]string)
 	// Select columnd data from INFORMATION_SCHEMA
-	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
+	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
 
 	if Debug {
 		fmt.Println("running: " + columnDataTypeQuery)
@@ -55,10 +54,11 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 		var columnKey string
 		var dataType string
 		var nullable string
-		rows.Scan(&column, &columnKey, &dataType, &nullable)
+		var comment string
+		rows.Scan(&column, &columnKey, &dataType, &nullable, &comment)
 
-		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable, "primary": columnKey}
-		columnNamesSorted=append(columnNamesSorted, column)
+		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable, "primary": columnKey, "comment": comment}
+		columnNamesSorted = append(columnNamesSorted, column)
 	}
 
 	return &columnDataTypes, columnNamesSorted, err
@@ -100,16 +100,14 @@ func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string
 		if jsonAnnotation == true {
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
 		}
-		if len(annotations) > 0 {
-			structure += fmt.Sprintf("\n%s %s `%s`",
-				fieldName,
-				valueType,
-				strings.Join(annotations, " "))
 
+		if len(annotations) > 0 {
+			// add colulmn comment
+			comment:=mysqlType["comment"]
+			structure += fmt.Sprintf("\n%s %s `%s`  //%s", fieldName, valueType, strings.Join(annotations, " "), comment)
+			//structure += fmt.Sprintf("\n%s %s `%s`", fieldName, valueType, strings.Join(annotations, " "))
 		} else {
-			structure += fmt.Sprintf("\n%s %s",
-				fieldName,
-				valueType)
+			structure += fmt.Sprintf("\n%s %s",fieldName,valueType)
 		}
 	}
 	return structure
