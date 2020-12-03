@@ -85,11 +85,10 @@ func Generate(columnTypes map[string]map[string]string, tableName string, struct
 	var dbTypes string
 	dbTypes = generateMysqlTypes(columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
-	strImport:=`import (
+	strImport := `import (
 		"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	)`
-
 
 	src := fmt.Sprintf("package %s\n\n%s\n\ntype %s %s}",
 		pkgName,
@@ -97,17 +96,57 @@ func Generate(columnTypes map[string]map[string]string, tableName string, struct
 		structName,
 		dbTypes)
 	if gormAnnotation == true {
-		tableNameFunc := "// TableName sets the insert table name for this struct type\n" +
-			"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") TableName() string {\n" +
-			"	return \"" + tableName + "\"" +
-			"}"
-		src = fmt.Sprintf("%s\n%s", src, tableNameFunc)
+		//tableNameFunc := "// TableName sets the insert table name for this struct type\n" +
+		//	//"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") TableName() string {\n" +
+		//	GetStructTile(structName) + "TableName() string {\n" +
+		//	"	return \"" + tableName + "\"" +
+		//	"}\n"
+
+		var funList string
+		funList += GetTableNameFun(structName, tableName)
+		funList += GetDeleteFun(structName)
+		src = fmt.Sprintf("%s\n%s", src, funList)
 	}
 	formatted, err := format.Source([]byte(src))
 	if err != nil {
 		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
 	}
 	return formatted, err
+}
+
+func GetStructTile(structName string) string {
+	str := "func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") "
+	return str
+}
+
+func GetTableNameFun(structName string, tableName string) string {
+	str := `
+// TableName  返回数据库名字
+func (pLock *MisLock) TableName() string {
+	return "mis_lock"
+}
+`
+	res := ReplaceFun(str, structName)
+	res = strings.ReplaceAll(res, "mis_lock", tableName)
+	return res
+}
+
+func GetDeleteFun(structName string) string {
+	str := `
+// Delete 删除函数，根据ID删除数据
+func (pLock *MisLock) Delete() error {
+	return db.Engine().Delete(pLock).Error
+}
+`
+	return ReplaceFun(str, structName)
+}
+
+func ReplaceFun(str string, structName string) string {
+	res := str
+	m := strings.ToLower(string(structName[0]))
+	res = strings.ReplaceAll(res, "MisLock", structName)
+	res = strings.ReplaceAll(res, "pLock", m)
+	return res
 }
 
 // fmtFieldName formats a string as a struct key
