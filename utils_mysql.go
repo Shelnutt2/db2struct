@@ -30,7 +30,7 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 	// Store colum as map of maps
 	columnDataTypes := make(map[string]map[string]string)
 	// Select columnd data from INFORMATION_SCHEMA
-	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
+	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE,COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
 
 	if Debug {
 		fmt.Println("running: " + columnDataTypeQuery)
@@ -53,9 +53,10 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 		var columnKey string
 		var dataType string
 		var nullable string
-		rows.Scan(&column, &columnKey, &dataType, &nullable)
+		var comment string
+		rows.Scan(&column, &columnKey, &dataType, &nullable, &comment)
 
-		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable, "primary": columnKey}
+		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable, "primary": columnKey, "comment": comment}
 	}
 
 	return &columnDataTypes, err
@@ -63,7 +64,7 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 
 // Generate go struct entries for a map[string]interface{} structure
 func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) string {
-	structure := "struct {"
+	structure := "struct {\n\tModel"
 
 	keys := make([]string, 0, len(obj))
 	for key := range obj {
@@ -72,6 +73,15 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 	sort.Strings(keys)
 
 	for _, key := range keys {
+		//fmt.Println("key============= ", key)
+		if gormAnnotation == true { // gorm 跳过 id , create_at等字段
+			if key == "id" ||
+				key == "create_at" ||
+				key == "deleted_at" ||
+				key == "update_at" {
+				continue
+			}
+		}
 		mysqlType := obj[key]
 		nullable := false
 		if mysqlType["nullable"] == "YES" {
@@ -95,20 +105,44 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 			annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s%s\"", key, primary))
 		}
 		if jsonAnnotation == true {
-			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
+			//res := Lcfirst(Case2Camel(key))  // 驼峰
+			res := key // 下划线
+			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", res))
 		}
+
+		var note string
+		if mysqlType["comment"] != "" {
+			note = fmt.Sprintf("  // %s", mysqlType["comment"])
+		}
+
+		keyAnnotation := true
+		if keyAnnotation == true {
+			var key string
+			keys := strings.Split(mysqlType["comment"], " ")
+			if len(keys) > 0 {
+				key = keys[0]
+			} else {
+				key = mysqlType["comment"]
+			}
+			annotations = append(annotations, fmt.Sprintf("key:\"%s\"", key))
+		}
+
 		if len(annotations) > 0 {
-			structure += fmt.Sprintf("\n%s %s `%s`",
+			structure += fmt.Sprintf("\n\t%s %s `%s` %s",
 				fieldName,
 				valueType,
-				strings.Join(annotations, " "))
+				strings.Join(annotations, " "),
+				note)
 
 		} else {
-			structure += fmt.Sprintf("\n%s %s",
+			structure += fmt.Sprintf("\n\t%s %s %s",
 				fieldName,
-				valueType)
+				valueType,
+				note)
 		}
+
 	}
+	structure = structure + "\n"
 	return structure
 }
 
