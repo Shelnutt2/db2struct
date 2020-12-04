@@ -35,16 +35,20 @@ echo "start..."
 #create "COLUMNS" "TColumn"
 
 #oms===
+create "brand" "OmsBrand"
 create "cluster" "OmsCluster"
-create "config" "OmsConfig"
-create "config_history" "OmsConfigHistory"
+create "configure" "OmsConfigure"
+create "configure_history" "OmsConfigureHistory"
+create "ecs" "OmsEcs"
 create "env" "OmsEnv"
 create "env_history" "OmsEnvHistory"
 create "image" "OmsImage"
+create "instance" "OmsInstance"
 create "instance_groups" "OmsInstanceGroups"
 create "package" "OmsPackage"
 create "script" "OmsScript"
 create "script_history" "OmsScriptHistory"
+create "security_group" "OmsSecurityGroup"
 create "service_type" "OmsServiceType"
 
 

@@ -22,8 +22,8 @@ const (
 	golangFloat64    = "float64"
 	gureguNullString = "string"
 	sqlNullString    = "string"
-	gureguNullTime   = "time.Time"
-	golangTime       = "time.Time"
+	gureguNullTime   = "ctime.Time"
+	golangTime       = "ctime.Time"
 )
 
 // commonInitialisms is a set of common initialisms.
@@ -86,7 +86,7 @@ func Generate(columnTypes map[string]map[string]string, tableName string, struct
 	dbTypes = generateMysqlTypes(columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
 	strImport := `import (
-		"github.com/jinzhu/gorm"
+	"oms/pkg/db"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	)`
 
@@ -105,6 +105,7 @@ func Generate(columnTypes map[string]map[string]string, tableName string, struct
 		var funList string
 		funList += GetTableNameFun(structName, tableName)
 		funList += GetDeleteFun(structName)
+		funList += GetSaveFun(structName)
 		src = fmt.Sprintf("%s\n%s", src, funList)
 	}
 	formatted, err := format.Source([]byte(src))
@@ -136,6 +137,16 @@ func GetDeleteFun(structName string) string {
 // Delete 删除函数，根据ID删除数据
 func (pLock *MisLock) Delete() error {
 	return db.Engine().Delete(pLock).Error
+}
+`
+	return ReplaceFun(str, structName)
+}
+
+func GetSaveFun(structName string) string {
+	str := `
+// Save 保存、更新函数，id为0新建数据，id不为0更新数据
+func (pLock *MisLock) Save() error {
+	return db.Engine().Save(pLock).Error
 }
 `
 	return ReplaceFun(str, structName)
