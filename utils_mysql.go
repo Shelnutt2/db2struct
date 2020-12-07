@@ -68,12 +68,6 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) string {
 	structure := "struct {"
 
-	//keys := make([]string, 0, len(obj))
-	//for key := range obj {
-	//	keys = append(keys, key)
-	//}
-	//sort.Strings(keys)
-
 	for _, key := range columnsSorted {
 		mysqlType := obj[key]
 		nullable := false
