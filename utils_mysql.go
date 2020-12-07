@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 )
 
 // GetColumnsFromMysqlTable Select column details from information schema and return map of map
-func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string, mariadbTable string) (*map[string]map[string]string, error) {
+func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string, mariadbTable string) (*map[string]map[string]string, []string, error) {
 
 	var err error
 	var db *sql.DB
@@ -24,13 +23,15 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 	// Check for error in db, note this does not check connectivity but does check uri
 	if err != nil {
 		fmt.Println("Error opening mysql db: " + err.Error())
-		return nil, err
+		return nil, nil, err
 	}
+
+	columnNamesSorted := []string{}
 
 	// Store colum as map of maps
 	columnDataTypes := make(map[string]map[string]string)
 	// Select columnd data from INFORMATION_SCHEMA
-	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
+	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
 
 	if Debug {
 		fmt.Println("running: " + columnDataTypeQuery)
@@ -40,12 +41,12 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 
 	if err != nil {
 		fmt.Println("Error selecting from db: " + err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 	if rows != nil {
 		defer rows.Close()
 	} else {
-		return nil, errors.New("No results returned for table")
+		return nil, nil, errors.New("No results returned for table")
 	}
 
 	for rows.Next() {
@@ -53,25 +54,21 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 		var columnKey string
 		var dataType string
 		var nullable string
-		rows.Scan(&column, &columnKey, &dataType, &nullable)
+		var comment string
+		rows.Scan(&column, &columnKey, &dataType, &nullable, &comment)
 
-		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable, "primary": columnKey}
+		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable, "primary": columnKey, "comment": comment}
+		columnNamesSorted = append(columnNamesSorted, column)
 	}
 
-	return &columnDataTypes, err
+	return &columnDataTypes, columnNamesSorted, err
 }
 
 // Generate go struct entries for a map[string]interface{} structure
-func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) string {
+func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) string {
 	structure := "struct {"
 
-	keys := make([]string, 0, len(obj))
-	for key := range obj {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	for _, key := range keys {
+	for _, key := range columnsSorted {
 		mysqlType := obj[key]
 		nullable := false
 		if mysqlType["nullable"] == "YES" {
@@ -97,16 +94,14 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 		if jsonAnnotation == true {
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
 		}
-		if len(annotations) > 0 {
-			structure += fmt.Sprintf("\n%s %s `%s`",
-				fieldName,
-				valueType,
-				strings.Join(annotations, " "))
 
+		if len(annotations) > 0 {
+			// add colulmn comment
+			comment:=mysqlType["comment"]
+			structure += fmt.Sprintf("\n%s %s `%s`  //%s", fieldName, valueType, strings.Join(annotations, " "), comment)
+			//structure += fmt.Sprintf("\n%s %s `%s`", fieldName, valueType, strings.Join(annotations, " "))
 		} else {
-			structure += fmt.Sprintf("\n%s %s",
-				fieldName,
-				valueType)
+			structure += fmt.Sprintf("\n%s %s",fieldName,valueType)
 		}
 	}
 	return structure
