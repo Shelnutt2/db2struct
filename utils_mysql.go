@@ -76,9 +76,9 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 		//fmt.Println("key============= ", key)
 		if gormAnnotation == true { // gorm 跳过 id , create_at等字段
 			if key == "id" ||
-				key == "create_at" ||
+				key == "created_at" ||
 				key == "deleted_at" ||
-				key == "update_at" {
+				key == "updated_at" {
 				continue
 			}
 		}
@@ -105,7 +105,7 @@ func generateMysqlTypes(obj map[string]map[string]string, depth int, jsonAnnotat
 			annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s%s\"", key, primary))
 		}
 		if jsonAnnotation == true {
-			//res := Lcfirst(Case2Camel(key))  // 驼峰
+			//res := Lcfirst(Case2Camel(key)) // 驼峰
 			res := key // 下划线
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", res))
 		}

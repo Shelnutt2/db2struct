@@ -86,7 +86,7 @@ func Generate(columnTypes map[string]map[string]string, tableName string, struct
 	dbTypes = generateMysqlTypes(columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
 	strImport := `import (
-	"oms/pkg/db"
+	"mis/pkg/db"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	)`
 
@@ -106,6 +106,7 @@ func Generate(columnTypes map[string]map[string]string, tableName string, struct
 		funList += GetTableNameFun(structName, tableName)
 		funList += GetDeleteFun(structName)
 		funList += GetSaveFun(structName)
+		funList += GetFun(structName)
 		src = fmt.Sprintf("%s\n%s", src, funList)
 	}
 	formatted, err := format.Source([]byte(src))
@@ -147,6 +148,19 @@ func GetSaveFun(structName string) string {
 // Save 保存、更新函数，id为0新建数据，id不为0更新数据
 func (pLock *MisLock) Save() error {
 	return db.Engine().Save(pLock).Error
+}
+`
+	return ReplaceFun(str, structName)
+}
+
+func GetFun(structName string) string {
+	str := `
+// GetByID 根据ID取值
+func (pLock *MisLock) GetByID() error {
+	if m.ID == 0 {
+		return fmt.Errorf("id can not be 0")
+	}
+	return db.Engine().Where("id=?",m.ID).First(pLock).Error
 }
 `
 	return ReplaceFun(str, structName)
