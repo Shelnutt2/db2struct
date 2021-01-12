@@ -9,7 +9,7 @@ dbhost="192.168.67.9"
 #库名
 dbname="clerk"
 
-#数据加密码
+#数据密码
 pwd=$IMPORT_DB_PWD
 
 #生成的model存放目录
