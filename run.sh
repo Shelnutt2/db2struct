@@ -41,6 +41,9 @@ function create() {
 }
 echo "start..."
 
+#create  表名 结构体名字
+#create "mis_import_history" "MisImportHistory"
+
 #mis------
 #create "mis_import_history" "MisImportHistory"
 #create "mis_flows" "MisFlows"
