@@ -56,11 +56,14 @@ echo "start..."
 
 #create "mis_hr_pwd" "MisHrPWD"
 #create "mis_wage_pwd" "MisWagePWD"
-create "mis_setting_allowance" "MisSettingAllowance"
-create "mis_setting_ats" "MisSettingAts"
-create "mis_setting_joblevel" "MisSettingJobLevel"
-create "mis_user_info" "MisUserInfo"
-create "mis_setting_severance" "MisSettingSeverance"
+#create "mis_setting_allowance" "MisSettingAllowance"
+#create "mis_setting_ats" "MisSettingAts"
+#create "mis_setting_joblevel" "MisSettingJobLevel"
+#create "mis_user_info" "MisUserInfo"
+#create "mis_setting_severance" "MisSettingSeverance"
+#create "mis_accident_judge" "MisAccidentJudge"
+
+
 
 
 #oms===
