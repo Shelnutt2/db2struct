@@ -70,5 +70,5 @@ create "ats_log" "AtsLog"
 #create "service_type" "OmsServiceType"
 #
 
-echo "success, please open $path"
+echo "success, please open $path/model"
 
