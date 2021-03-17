@@ -4,7 +4,7 @@ cat readme_linhc.md
 echo
 
 #数据库host
-dbhost="192.168.67.9"
+dbhost=$IMPORT_DB_HOST
 
 #库名
 dbname="clerk"
@@ -27,6 +27,10 @@ path="/Users/linhaicheng/tmp/mis"
     exit 1
  fi
 
+ if [ -z "$dbhost" ];then
+    echo "请设置环境变量（数据库host） IMPORT_DB_HOST   举个票子: export IMPORT_DB_HOST=\"xxx\""
+    exit 1
+ fi
 
 
 mkdir -p "$path/model"
@@ -52,37 +56,16 @@ echo "start..."
 #create "ats_detail" "AtsDetail"
 #create "ats_monthly" "AtsMonthly"
 
-#create "mis_wage_tax" "MisWageTax"
-#create "mis_user_info" "MisUserInfo"
-#create "mis_lock" "MisLock"
-#create "COLUMNS" "TColumn"ls
-
-#create "mis_hr_pwd" "MisHrPWD"
-#create "mis_wage_pwd" "MisWagePWD"
-#create "mis_setting_allowance" "MisSettingAllowance"
-#create "mis_setting_ats" "MisSettingAts"
-#create "mis_setting_joblevel" "MisSettingJobLevel"
-#create "mis_user_info" "MisUserInfo"
-#create "mis_setting_severance" "MisSettingSeverance"
 #create "mis_accident_judge" "MisAccidentJudge"
+#create "mis_holiday" "MisHoliday"
+#create "ats_leave_detail" "MisAtsLeaveDetail"
+#create "ats_duty" "AtsDuty"
+create "ats_log" "AtsLog"
 
 
 
 
 #oms===
-#create "brand" "OmsBrand"
-#create "cluster" "OmsCluster"
-#create "configure" "OmsConfigure"
-#create "configure_history" "OmsConfigureHistory"
-#create "ecs" "OmsEcs"
-#create "env" "OmsEnv"
-#create "env_history" "OmsEnvHistory"
-#create "image" "OmsImage"
-#create "instance" "OmsInstance"
-#create "instance_groups" "OmsInstanceGroups"
-#create "package" "OmsPackage"
-#create "script" "OmsScript"
-#create "script_history" "OmsScriptHistory"
 #create "security_group" "OmsSecurityGroup"
 #create "service_type" "OmsServiceType"
 #

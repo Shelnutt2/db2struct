@@ -5,4 +5,5 @@
 
 # create  表名 结构体名字
 
+# 保存run.sh后执行命令：
 # sh run.sh 生成model文件
