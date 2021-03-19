@@ -1,0 +1,128 @@
+package handler
+
+import (
+	"oms/api"
+	"oms/internal/model"
+	"oms/internal/restful/ctx"
+	"oms/pkg/log"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ReqMisLockGet struct {
+	ID uint
+}
+
+// @Title updater
+// @Description 程序包-获取
+// @Tags updater
+// @Accept   text/html
+// @Produce  json
+// @Param   id   query   int     true    "id"
+// @Param   X-Token   header   string     true    "登录token"
+// @Success 200 {object} api.RespCommon
+// @Router /oms/v1/updater/mis-lock [get]
+func HandleMisLockGet(c *gin.Context) {
+	var req = ReqMisLockGet{}
+	var resp = &api.RespCommon{}
+	ctx.Context(c).HandleQuery(req, func() (err error) {
+		var p model.MisLock
+		p.ID = req.ID
+		err = p.GetByID()
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		resp.Data = &p
+		return nil
+	}, resp)
+}
+
+// @Title updater
+// @Summary 程序包-新增
+// @Tags updater
+// @Param   X-Token   header   string     true    "登录token"
+// @Param   req   body  model.MisLock    true   "程序包"
+// @Success 200 {object} api.RespIDResult
+// @Router /oms/v1/updater/mis-lock [post]
+func HandleMisLockPost(c *gin.Context) {
+	var req model.MisLock
+	var resp api.RespIDResult
+	ctx.Context(c).HandleBindJSON(&req, func() error {
+		err := req.Save()
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		resp.Data.ID = req.ID
+		return nil
+	}, &resp)
+}
+
+// @Title updater
+// @Summary 程序包-修改
+// @Tags 升级
+// @Param   X-Token   header   string     true    "登录token"
+// @Param   req   body  model.MisLock    true   "程序包"
+// @Success 200 {object} api.RespIDResult
+// @Router /oms/v1/updater/mis-lock [put]
+func HandleMisLockPut(c *gin.Context) {
+	var req model.MisLock
+	var resp api.RespIDResult
+	ctx.Context(c).HandleBindJSON(&req, func() error {
+		err := req.Save()
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		resp.Data.ID = req.ID
+		return nil
+	}, &resp)
+}
+
+// RespMisLockList  程序返回列表response
+type RespMisLockList struct {
+	Code int32  `json:"code"` // 错误码
+	Msg  string `json:"msg"`  // 错误消息
+	Data struct {
+		Page model.Page      `json:"page"` // 分页信息
+		List []model.MisLock `json:"list"` // 数据
+	} `json:"data,omitempty"`
+}
+
+// @Title updater
+// @Summary  程序包-获取列表(带分页)
+// @Tags  updater
+// @Param   page   query   int     true    "获取页码 基于1"
+// @Param   size   query   int     true    "每页条数"
+// @Param   order   query   string     true    "排序字段"
+// @Param   desc   query   int 	false 	"排列 0-升序(默认) 1-降序"
+// @Param   X-Token   header   string     true    "登录token"
+// @Success 200 {object} RespMisLockList
+// @Router /oms/v1/updater/mis-lock-list [get]
+func HandleMisLockList(c *gin.Context) {
+	var req model.ReqMisLockList
+	ctx.Context(c).HandleList(&req, func() (interface{}, error) {
+		return model.GetMisLockList(&req)
+	})
+}
+
+// @Title updater
+// @Summary 程序包-删除
+// @Tags updater
+// @Param   X-Token   header   string     true    "登录token"
+// @Param   id   query   int     true    	"要删除的id"
+// @Success 200 {object} api.RespCommon
+// @Router /oms/v1/updater/mis-lock [delete]
+func HandleMisLockDelete(c *gin.Context) {
+	var id int
+	ctx.Context(c).HandleID(&id, func() error {
+		m := model.MisLock{}
+		m.ID = uint(id)
+		err := m.Delete()
+		if err != nil {
+			log.Error(err)
+		}
+		return err
+	})
+}

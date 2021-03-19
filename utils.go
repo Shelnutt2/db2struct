@@ -81,21 +81,23 @@ var Debug = false
 
 // Generate Given a Column map with datatypes and a name structName,
 // attempts to generate a struct definition
-func Generate(columnTypes map[string]map[string]string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) ([]byte, error) {
+func Generate(columnTypes map[string]map[string]string, tp *TableParam) ([]byte, error) {
 	var dbTypes string
-	dbTypes = generateMysqlTypes(columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
+	dbTypes = generateMysqlTypes(columnTypes, 0, tp.JsonAnnotation, tp.GormAnnotation, tp.GureguTypes)
 
 	strImport := `import (
+	"fmt"
+
 	"mis/pkg/db"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	)`
 
 	src := fmt.Sprintf("package %s\n\n%s\n\ntype %s %s}",
-		pkgName,
+		tp.PkgName,
 		strImport,
-		structName,
+		tp.StructName,
 		dbTypes)
-	if gormAnnotation == true {
+	if tp.GormAnnotation == true {
 		//tableNameFunc := "// TableName sets the insert table name for this struct type\n" +
 		//	//"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") TableName() string {\n" +
 		//	GetStructTile(structName) + "TableName() string {\n" +
@@ -103,10 +105,7 @@ func Generate(columnTypes map[string]map[string]string, tableName string, struct
 		//	"}\n"
 
 		var funList string
-		funList += GetTableNameFun(structName, tableName)
-		funList += GetDeleteFun(structName)
-		funList += GetSaveFun(structName)
-		funList += GetFun(structName)
+		funList = GetModelFromTmp(tp)
 		src = fmt.Sprintf("%s\n%s", src, funList)
 	}
 	formatted, err := format.Source([]byte(src))
@@ -157,10 +156,10 @@ func GetFun(structName string) string {
 	str := `
 // GetByID 根据ID取值
 func (pLock *MisLock) GetByID() error {
-	if m.ID == 0 {
+	if pLock.ID == 0 {
 		return fmt.Errorf("id can not be 0")
 	}
-	return db.Engine().Where("id=?",m.ID).First(pLock).Error
+	return db.Engine().Where("id=?",pLock.ID).First(pLock).Error
 }
 `
 	return ReplaceFun(str, structName)

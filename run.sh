@@ -60,7 +60,7 @@ echo "start..."
 #create "mis_holiday" "MisHoliday"
 #create "ats_leave_detail" "MisAtsLeaveDetail"
 #create "ats_duty" "AtsDuty"
-create "ats_log" "AtsLog"
+create "package" "AtsLog"
 
 
 

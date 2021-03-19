@@ -1,0 +1,62 @@
+
+
+
+
+// TableName  返回数据库名字
+func (pLock *MisLock) TableName() string {
+	return "mis_lock"
+}
+
+// Delete 删除函数，根据ID删除数据
+func (pLock *MisLock) Delete() error {
+	return db.Engine().Delete(pLock).Error
+}
+
+// Save 保存、更新函数，id为0新建数据，id不为0更新数据
+func (pLock *MisLock) Save() error {
+	return db.Engine().Save(pLock).Error
+}
+
+// GetByID 根据ID取值
+func (pLock *MisLock) GetByID() error {
+	if pLock.ID == 0 {
+		return fmt.Errorf("id can not be 0")
+	}
+	return db.Engine().Where("id=?", pLock.ID).First(pLock).Error
+}
+
+// GetAllList 获取全部数据列表不带分页
+func (pLock *MisLock) GetAllList() ([]*MisLock, error) {
+	var list []*MisLock
+	// todo 请修改列表查询条件
+	err := db.Engine().Find(&list).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return list, nil
+	}
+	if err != nil {
+		return list, err
+	}
+	return list, nil
+}
+
+// ReqMisLockList 获取列表request（带分页）
+type ReqMisLockList struct {
+	OrderPage
+}
+
+// GetMisLockList 获取列表（带分页）
+func GetMisLockList(req *ReqMisLockList) ([]*MisLock, error) {
+	var list []*MisLock
+
+	whereConn := db.Engine().Where("1=1")
+	// todo 增加查询条件
+	// if req.Check != 0 {
+	// 	whereConn = whereConn.Where("`check`=?", req.Check)
+	// }
+
+	err := req.Paging(whereConn).Find(&list).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return list, nil
+	}
+	return list, nil
+}

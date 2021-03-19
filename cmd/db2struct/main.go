@@ -21,6 +21,8 @@ var mariadbUser = goopt.String([]string{"-u", "--user"}, "user", "user to connec
 var verbose = goopt.Flag([]string{"-v", "--verbose"}, []string{}, "Enable verbose output", "")
 var packageName = goopt.String([]string{"--package"}, "", "name to set for package")
 var structName = goopt.String([]string{"--struct"}, "", "name to set for struct")
+var projectName = goopt.String([]string{"--project"}, "", "name to set projectName")
+var tableNote = goopt.String([]string{"--note"}, "", "table note 表-中文名")
 
 var jsonAnnotation = goopt.Flag([]string{"--json"}, []string{"--no-json"}, "Add json annotations (default)", "Disable json annotations")
 var gormAnnotation = goopt.Flag([]string{"--gorm"}, []string{}, "Add gorm annotations (tags)", "")
@@ -99,8 +101,20 @@ func main() {
 	if packageName == nil || *packageName == "" {
 		*packageName = "newpackage"
 	}
+
+	tp := db2struct.TableParam{
+		TableName:      *mariadbTable,
+		StructName:     *structName,
+		PkgName:        *packageName,
+		JsonAnnotation: *jsonAnnotation,
+		GormAnnotation: *gormAnnotation,
+		GureguTypes:    *gureguTypes,
+		TableNote:      *tableNote,
+		ProjectName:    *projectName,
+	}
+
 	// Generate struct string based on columnDataTypes
-	struc, err := db2struct.Generate(*columnDataTypes, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *gureguTypes)
+	struc, err := db2struct.Generate(*columnDataTypes, &tp)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())

@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/Shelnutt2/db2struct v1.0.1
 	github.com/droundy/goopt v0.0.0-20170604162106-0b8effe182da
+	github.com/gin-gonic/gin v1.6.3
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c
 	github.com/jinzhu/gorm v1.9.16
