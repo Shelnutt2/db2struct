@@ -10,14 +10,14 @@ import (
 )
 
 // GetColumnsFromMysqlTable Select column details from information schema and return map of map
-func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string, mariadbTable string) (*map[string]map[string]string, error) {
+func GetColumnsFromMysqlTable(dp *DBParam) (*map[string]map[string]string, error) {
 
 	var err error
 	var db *sql.DB
-	if mariadbPassword != "" {
-		db, err = sql.Open("mysql", mariadbUser+":"+mariadbPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
+	if dp.MariadbPassword != "" {
+		db, err = sql.Open("mysql", dp.MariadbUser+":"+dp.MariadbPassword+"@tcp("+dp.MariadbHost+":"+strconv.Itoa(dp.MariadbPort)+")/"+dp.MariadbDatabase+"?&parseTime=True")
 	} else {
-		db, err = sql.Open("mysql", mariadbUser+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
+		db, err = sql.Open("mysql", dp.MariadbUser+"@tcp("+dp.MariadbHost+":"+strconv.Itoa(dp.MariadbPort)+")/"+dp.MariadbDatabase+"?&parseTime=True")
 	}
 	defer db.Close()
 
@@ -36,7 +36,7 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 		fmt.Println("running: " + columnDataTypeQuery)
 	}
 
-	rows, err := db.Query(columnDataTypeQuery, mariadbDatabase, mariadbTable)
+	rows, err := db.Query(columnDataTypeQuery, dp.MariadbDatabase, dp.MariadbTable)
 
 	if err != nil {
 		fmt.Println("Error selecting from db: " + err.Error())

@@ -87,10 +87,12 @@ func Generate(columnTypes map[string]map[string]string, tp *TableParam) ([]byte,
 
 	strImport := `import (
 	"fmt"
-
 	"mis/pkg/db"
+	
+	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	)`
+	strImport = strings.ReplaceAll(strImport, "mis", tp.ProjectName)
 
 	src := fmt.Sprintf("package %s\n\n%s\n\ntype %s %s}",
 		tp.PkgName,
@@ -98,12 +100,7 @@ func Generate(columnTypes map[string]map[string]string, tp *TableParam) ([]byte,
 		tp.StructName,
 		dbTypes)
 	if tp.GormAnnotation == true {
-		//tableNameFunc := "// TableName sets the insert table name for this struct type\n" +
-		//	//"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") TableName() string {\n" +
-		//	GetStructTile(structName) + "TableName() string {\n" +
-		//	"	return \"" + tableName + "\"" +
-		//	"}\n"
-
+		//  获取函数模板
 		var funList string
 		funList = GetModelFromTmp(tp)
 		src = fmt.Sprintf("%s\n%s", src, funList)
@@ -113,56 +110,6 @@ func Generate(columnTypes map[string]map[string]string, tp *TableParam) ([]byte,
 		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
 	}
 	return formatted, err
-}
-
-func GetStructTile(structName string) string {
-	str := "func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") "
-	return str
-}
-
-func GetTableNameFun(structName string, tableName string) string {
-	str := `
-// TableName  返回数据库名字
-func (pLock *MisLock) TableName() string {
-	return "mis_lock"
-}
-`
-	res := ReplaceFun(str, structName)
-	res = strings.ReplaceAll(res, "mis_lock", tableName)
-	return res
-}
-
-func GetDeleteFun(structName string) string {
-	str := `
-// Delete 删除函数，根据ID删除数据
-func (pLock *MisLock) Delete() error {
-	return db.Engine().Delete(pLock).Error
-}
-`
-	return ReplaceFun(str, structName)
-}
-
-func GetSaveFun(structName string) string {
-	str := `
-// Save 保存、更新函数，id为0新建数据，id不为0更新数据
-func (pLock *MisLock) Save() error {
-	return db.Engine().Save(pLock).Error
-}
-`
-	return ReplaceFun(str, structName)
-}
-
-func GetFun(structName string) string {
-	str := `
-// GetByID 根据ID取值
-func (pLock *MisLock) GetByID() error {
-	if pLock.ID == 0 {
-		return fmt.Errorf("id can not be 0")
-	}
-	return db.Engine().Where("id=?",pLock.ID).First(pLock).Error
-}
-`
-	return ReplaceFun(str, structName)
 }
 
 func ReplaceFun(str string, structName string) string {

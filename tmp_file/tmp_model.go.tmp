@@ -1,7 +1,5 @@
 
 
-
-
 // TableName  返回数据库名字
 func (pLock *MisLock) TableName() string {
 	return "mis_lock"
@@ -25,7 +23,7 @@ func (pLock *MisLock) GetByID() error {
 	return db.Engine().Where("id=?", pLock.ID).First(pLock).Error
 }
 
-// GetAllList 获取全部数据列表不带分页
+// GetAllList 获取全部数据列表（不带分页）
 func (pLock *MisLock) GetAllList() ([]*MisLock, error) {
 	var list []*MisLock
 	// todo 请修改列表查询条件

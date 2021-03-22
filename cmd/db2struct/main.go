@@ -86,13 +86,6 @@ func main() {
 		return
 	}
 
-	columnDataTypes, err := db2struct.GetColumnsFromMysqlTable(*mariadbUser, *mariadbPassword, mariadbHost, *mariadbPort, *mariadbDatabase, *mariadbTable)
-
-	if err != nil {
-		fmt.Println("Error in selecting column data information from mysql information schema")
-		return
-	}
-
 	// If structName is not set we need to default it
 	if structName == nil || *structName == "" {
 		*structName = "newstruct"
@@ -100,6 +93,15 @@ func main() {
 	// If packageName is not set we need to default it
 	if packageName == nil || *packageName == "" {
 		*packageName = "newpackage"
+	}
+
+	dp := db2struct.DBParam{
+		MariadbUser:     *mariadbUser,
+		MariadbPassword: *mariadbPassword,
+		MariadbHost:     mariadbHost,
+		MariadbPort:     *mariadbPort,
+		MariadbDatabase: *mariadbDatabase,
+		MariadbTable:    *mariadbTable,
 	}
 
 	tp := db2struct.TableParam{
@@ -113,32 +115,46 @@ func main() {
 		ProjectName:    *projectName,
 	}
 
-	// Generate struct string based on columnDataTypes
-	struc, err := db2struct.Generate(*columnDataTypes, &tp)
+	StartCreate(&tp, &dp)
 
-	if err != nil {
-		fmt.Println("Error in creating struct from json: " + err.Error())
-		return
-	}
-	if targetFile != nil && *targetFile != "" {
-		file, err := os.OpenFile(*targetFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			fmt.Println("Open File fail: " + err.Error())
-			return
-		}
-		length, err := file.WriteString(string(struc))
-		if err != nil {
-			fmt.Println("Save File fail: " + err.Error())
-			return
-		}
-		fmt.Printf("wrote %d bytes\n", length)
-	} else {
-		fmt.Println(string(struc))
-	}
 }
 
 func getMariadbPassword(password string) error {
 	mariadbPassword = new(string)
 	*mariadbPassword = password
+	return nil
+}
+
+func StartCreate(tp *db2struct.TableParam, dp *db2struct.DBParam) error {
+
+	columnDataTypes, err := db2struct.GetColumnsFromMysqlTable(dp)
+	if err != nil {
+		fmt.Println("Error in selecting column data information from mysql information schema")
+		return err
+	}
+
+	// Generate struct string based on columnDataTypes
+	struc, err := db2struct.Generate(*columnDataTypes, tp)
+
+	if err != nil {
+		fmt.Println("Error in creating struct from json: " + err.Error())
+		return err
+	}
+	var saveFile string
+	if targetFile != nil && *targetFile != "" {
+		saveFile = *targetFile + "/model/" + tp.TableName + ".go"
+		length, err := db2struct.AutoSaveFile(saveFile, string(struc))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		fmt.Printf("wrote %d bytes\n", length)
+	}
+	fmt.Println(string(struc))
+	fmt.Println("")
+	fmt.Println("======================================")
+	fmt.Println("save model  file to ", saveFile)
+	fmt.Println("")
+
 	return nil
 }
