@@ -114,13 +114,13 @@ func AutoSaveFile(fileName string, struc string) (int, error) {
 		return 0, err
 	}
 
+	var allCode string
 	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Println("Open File fail: " + err.Error())
-		return 0, err
+	if err != nil { // 原文件不存在
+		allCode = struc
+	} else {
+		allCode = struc + c.MyCode // 生成的代码+自定义的代码
 	}
-
-	allCode := struc + c.MyCode // 生成的代码+自定义的代码
 
 	length, err := file.WriteString(allCode)
 	if err != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -47,6 +48,8 @@ func init() {
 
 func main() {
 
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
+
 	// Username is required
 	if mariadbUser == nil || *mariadbUser == "user" {
 		fmt.Println("Username is required! Add it with --user=name")
@@ -64,7 +67,7 @@ func main() {
 		stringPass := string(pass)
 		mariadbPassword = &stringPass
 		if err != nil {
-			fmt.Println("Error reading password: " + err.Error())
+			log.Println("Error reading password: " + err.Error())
 			return
 		}
 	} else if mariadbPassword == nil {
@@ -73,16 +76,16 @@ func main() {
 	}
 
 	if *verbose {
-		fmt.Println("Connecting to mysql server " + mariadbHost + ":" + strconv.Itoa(*mariadbPort))
+		log.Println("Connecting to mysql server " + mariadbHost + ":" + strconv.Itoa(*mariadbPort))
 	}
 
 	if mariadbDatabase == nil || *mariadbDatabase == "" {
-		fmt.Println("Database can not be null")
+		log.Println("Database can not be null")
 		return
 	}
 
 	if mariadbTable == nil || *mariadbTable == "" {
-		fmt.Println("Table can not be null")
+		log.Println("Table can not be null")
 		return
 	}
 
@@ -129,7 +132,7 @@ func StartCreate(tp *db2struct.TableParam, dp *db2struct.DBParam) error {
 
 	columnDataTypes, err := db2struct.GetColumnsFromMysqlTable(dp)
 	if err != nil {
-		fmt.Println("Error in selecting column data information from mysql information schema")
+		log.Println("Error in selecting column data information from mysql information schema")
 		return err
 	}
 
@@ -137,7 +140,7 @@ func StartCreate(tp *db2struct.TableParam, dp *db2struct.DBParam) error {
 	struc, err := db2struct.Generate(*columnDataTypes, tp)
 
 	if err != nil {
-		fmt.Println("Error in creating struct from json: " + err.Error())
+		log.Println("Error in creating struct from json: " + err.Error())
 		return err
 	}
 	var saveFile string
@@ -145,10 +148,10 @@ func StartCreate(tp *db2struct.TableParam, dp *db2struct.DBParam) error {
 		saveFile = *targetFile + "/model/" + tp.TableName + ".go"
 		length, err := db2struct.AutoSaveFile(saveFile, string(struc))
 		if err != nil {
-			fmt.Println(err)
+			log.Println("open err: ", err)
 			return err
 		}
-		fmt.Printf("wrote %d bytes\n", length)
+		log.Printf("wrote %d bytes\n", length)
 	}
 	fmt.Println(string(struc))
 	fmt.Println("")
