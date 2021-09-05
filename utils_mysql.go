@@ -17,6 +17,8 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 		parts := strings.SplitN(mariadbHost, ":", 2)
 		socketPath := parts[1]
 		db, err = sql.Open("mysql", mariadbUser+":"+mariadbPassword+"@unix("+socketPath+")"+"/"+mariadbDatabase+"?charset=utf8&parseTime=True")
+		// Cite: https://dev.mysql.com/doc/mysql-shell/8.0/en/mysql-shell-connection-socket.html
+		// Cite: https://stackoverflow.com/a/67867865/71978
 	} else {
 		if mariadbPassword != "" {
 			db, err = sql.Open("mysql", mariadbUser+":"+mariadbPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
