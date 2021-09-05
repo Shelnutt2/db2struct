@@ -58,6 +58,14 @@ Planned Support
 Structures are created by querying the INFORMATION_SCHEMA.Columns table and then formatting the types, column names,
 and metadata to create a usable go compatible struct type.
 
+NOTE: If you wish to use a unix socket instead of a TCP socket,
+specify the hostname as `unix:` then the path to the named socket.
+For example:
+
+```BASH
+--host unix:/tmp/mysql.sock
+```
+
 #### Supported Datatypes
 
 Currently only a limited number of MariaDB/MySQL datatypes are supported. Initial support includes:
