@@ -31,7 +31,7 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 	// Store colum as map of maps
 	columnDataTypes := make(map[string]map[string]string)
 	// Select columnd data from INFORMATION_SCHEMA
-	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc"
+	columnDataTypeQuery := "SELECT COLUMN_TYPE, COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc"
 
 	if Debug {
 		fmt.Println("running: " + columnDataTypeQuery)
@@ -50,14 +50,15 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 	}
 
 	for rows.Next() {
+		var columnType string
 		var column string
 		var columnKey string
 		var dataType string
 		var nullable string
 		var comment string
-		rows.Scan(&column, &columnKey, &dataType, &nullable, &comment)
+		rows.Scan(&columnType, &column, &columnKey, &dataType, &nullable, &comment)
 
-		columnDataTypes[column] = map[string]string{"value": dataType, "nullable": nullable, "primary": columnKey, "comment": comment}
+		columnDataTypes[column] = map[string]string{"columnType": columnType, "value": dataType, "nullable": nullable, "primary": columnKey, "comment": comment}
 		columnNamesSorted = append(columnNamesSorted, column)
 	}
 
@@ -84,7 +85,7 @@ func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string
 		var valueType string
 		// If the guregu (https://github.com/guregu/null) CLI option is passed use its types, otherwise use go's sql.NullX
 
-		valueType = mysqlTypeToGoType(mysqlType["value"], nullable, gureguTypes)
+		valueType = mysqlTypeToGoType(mysqlType["value"], nullable, gureguTypes, isSigned(mysqlType["columnType"]))
 
 		fieldName := fmtFieldName(stringifyFirstChar(key))
 		var annotations []string
@@ -101,7 +102,7 @@ func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string
 		if len(annotations) > 0 {
 			// add colulmn comment
 			comment := mysqlType["comment"]
-			structure += fmt.Sprintf("\n%s %s `%s`  //%s", fieldName, valueType, strings.Join(annotations, " "), comment)
+			structure += fmt.Sprintf("\n%s %s `%s`  // %s", fieldName, valueType, strings.Join(annotations, " "), comment)
 			//structure += fmt.Sprintf("\n%s %s `%s`", fieldName, valueType, strings.Join(annotations, " "))
 		} else {
 			structure += fmt.Sprintf("\n%s %s", fieldName, valueType)
@@ -110,18 +111,29 @@ func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string
 	return structure
 }
 
+func isSigned(columnType string) bool {
+	return !strings.Contains(columnType, "unsigned")
+}
+
 // mysqlTypeToGoType converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
-func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
+func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, signed bool) string {
 	switch mysqlType {
 	case "tinyint", "int", "smallint", "mediumint":
 		if nullable {
 			if gureguTypes {
 				return gureguNullInt
 			}
-			return sqlNullInt
+			return sqlNullInt // Unsiged will fit in this 64 bit number
 		}
 		return golangInt
 	case "bigint":
+		// Until they support this https://go-review.googlesource.com/c/go/+/344410/
+		if !signed {
+			if nullable {
+				return golangNullUint64
+			}
+			return golangUint64
+		}
 		if nullable {
 			if gureguTypes {
 				return gureguNullInt

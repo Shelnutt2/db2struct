@@ -11,6 +11,8 @@ import (
 // Constants for return types of golang
 const (
 	golangByteArray  = "[]byte"
+	golangUint64     = "uint64"
+	golangNullUint64 = "*uint64"
 	gureguNullInt    = "null.Int"
 	sqlNullInt       = "sql.NullInt64"
 	golangInt        = "int"
