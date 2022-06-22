@@ -8,29 +8,71 @@ import (
 	"strings"
 )
 
-// GetColumnsFromMysqlTable Select column details from information schema and return map of map
-func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string, mariadbTable string) (*map[string]map[string]string, []string, error) {
-
-	var err error
-	var db *sql.DB
+func connect(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string) (*sql.DB, error) {
 	if mariadbPassword != "" {
-		db, err = sql.Open("mysql", mariadbUser+":"+mariadbPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
-	} else {
-		db, err = sql.Open("mysql", mariadbUser+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
+		return sql.Open("mysql", mariadbUser+":"+mariadbPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
+	}
+	return sql.Open("mysql", mariadbUser+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
+}
+
+// GetTablesFromMysqlSchema Select table details from information schema
+func GetTablesFromMysqlSchema(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string) ([]string, error) {
+
+	db, err := connect(mariadbUser, mariadbPassword, mariadbHost, mariadbPort, mariadbDatabase)
+	// Check for error in db, note this does not check connectivity but does check uri
+	if err != nil {
+		fmt.Println("Error opening mysql db: " + err.Error())
+		return nil, err
 	}
 	defer db.Close()
 
+	tableNamesSorted := []string{}
+
+	// Select table data from INFORMATION_SCHEMA
+	tableDataTypeQuery := "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? order by TABLE_NAME asc"
+
+	if Debug {
+		fmt.Println("running: " + tableDataTypeQuery)
+	}
+
+	rows, err := db.Query(tableDataTypeQuery, mariadbDatabase)
+
+	if err != nil {
+		fmt.Println("Error selecting from db: " + err.Error())
+		return nil, err
+	}
+	if rows != nil {
+		defer rows.Close()
+	} else {
+		return nil, errors.New("No results returned for table")
+	}
+
+	for rows.Next() {
+		var tableName string
+		rows.Scan(&tableName)
+
+		tableNamesSorted = append(tableNamesSorted, tableName)
+	}
+
+	return tableNamesSorted, err
+}
+
+// GetColumnsFromMysqlTable Select column details from information schema and return map of map
+func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariadbHost string, mariadbPort int, mariadbDatabase string, mariadbTable string) (*map[string]map[string]string, []string, error) {
+
+	db, err := connect(mariadbUser, mariadbPassword, mariadbHost, mariadbPort, mariadbDatabase)
 	// Check for error in db, note this does not check connectivity but does check uri
 	if err != nil {
 		fmt.Println("Error opening mysql db: " + err.Error())
 		return nil, nil, err
 	}
+	defer db.Close()
 
 	columnNamesSorted := []string{}
 
-	// Store colum as map of maps
+	// Store column as map of maps
 	columnDataTypes := make(map[string]map[string]string)
-	// Select columnd data from INFORMATION_SCHEMA
+	// Select column data from INFORMATION_SCHEMA
 	columnDataTypeQuery := "SELECT COLUMN_TYPE, COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc"
 
 	if Debug {
@@ -102,8 +144,10 @@ func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string
 		if len(annotations) > 0 {
 			// add colulmn comment
 			comment := mysqlType["comment"]
-			structure += fmt.Sprintf("\n%s %s `%s`  // %s", fieldName, valueType, strings.Join(annotations, " "), comment)
-			//structure += fmt.Sprintf("\n%s %s `%s`", fieldName, valueType, strings.Join(annotations, " "))
+			structure += fmt.Sprintf("\n%s %s `%s`", fieldName, valueType, strings.Join(annotations, " "))
+			if comment != "" {
+				structure += fmt.Sprintf("  // %s", comment)
+			}
 		} else {
 			structure += fmt.Sprintf("\n%s %s", fieldName, valueType)
 		}

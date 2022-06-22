@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	goopt "github.com/droundy/goopt"
 	"github.com/ericksonjoseph/db2struct"
@@ -79,48 +80,86 @@ func main() {
 		fmt.Println("Database can not be null")
 		return
 	}
-
-	if mariadbTable == nil || *mariadbTable == "" {
-		fmt.Println("Table can not be null")
-		return
-	}
-
-	columnDataTypes, columnsSorted, err := db2struct.GetColumnsFromMysqlTable(*mariadbUser, *mariadbPassword, mariadbHost, *mariadbPort, *mariadbDatabase, *mariadbTable)
-
-	if err != nil {
-		fmt.Println("Error in selecting column data information from mysql information schema")
-		return
-	}
-
-	// If structName is not set we need to default it
-	if structName == nil || *structName == "" {
-		*structName = "newstruct"
-	}
 	// If packageName is not set we need to default it
 	if packageName == nil || *packageName == "" {
 		*packageName = "newpackage"
 	}
-	// Generate struct string based on columnDataTypes
-	struc, err := db2struct.Generate(*columnDataTypes, columnsSorted, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *dbAnnotation, *gureguTypes)
 
-	if err != nil {
-		fmt.Println("Error in creating struct from json: " + err.Error())
-		return
+	var tablesSorted []string
+
+	// If no table is specified, process all tables in the schema
+	if mariadbTable == nil || *mariadbTable == "" {
+		var tErr error
+		tablesSorted, tErr = db2struct.GetTablesFromMysqlSchema(*mariadbUser, *mariadbPassword, mariadbHost, *mariadbPort, *mariadbDatabase)
+		if tErr != nil {
+			fmt.Printf("Error in selecting table data from mysql information schema %s", tErr)
+			return
+		}
+		fmt.Printf("--table flag missing so we will process all tables in the schema i.e. %+v\n", tablesSorted)
+	} else {
+		tablesSorted = []string{*mariadbTable}
 	}
+
+	heading := fmt.Sprintf("// This file was automatically generated. Do not edit.\n\npackage %s\n\nimport (\n\t\"database/sql\"\n\t\"time\"\n)", *packageName)
+
+	var file *os.File
+
 	if targetFile != nil && *targetFile != "" {
-		file, err := os.OpenFile(*targetFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		var err error
+		file, err = os.OpenFile(*targetFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
 			fmt.Println("Open File fail: " + err.Error())
 			return
 		}
-		length, err := file.WriteString(string(struc))
+	}
+
+	if file != nil {
+		length, err := file.WriteString(fmt.Sprintf("%s", heading))
 		if err != nil {
 			fmt.Println("Save File fail: " + err.Error())
 			return
 		}
 		fmt.Printf("wrote %d bytes\n", length)
 	} else {
-		fmt.Println(string(struc))
+		fmt.Println(string(heading))
+	}
+
+	for _, table := range tablesSorted {
+
+		columnDataTypes, columnsSorted, err := db2struct.GetColumnsFromMysqlTable(*mariadbUser, *mariadbPassword, mariadbHost, *mariadbPort, *mariadbDatabase, table)
+		if err != nil {
+			fmt.Printf("Error in selecting column data from mysql information schema %s", err)
+			return
+		}
+
+		var stName string
+		// If structName is not set we need to default it to the table name
+		if structName == nil || *structName == "" {
+			stName = strings.Title(table)
+		} else {
+			stName = *structName
+			// If it is set we need to default it to the table name
+			if len(tablesSorted) > 1 {
+				stName = fmt.Sprintf("%s%s", *structName, strings.Title(table))
+			}
+		}
+
+		// Generate struct string based on columnDataTypes
+		struc, err := db2struct.Generate(*columnDataTypes, columnsSorted, table, stName, *jsonAnnotation, *gormAnnotation, *dbAnnotation, *gureguTypes)
+		if err != nil {
+			fmt.Println("Error in creating struct from json: " + err.Error())
+			return
+		}
+		if file != nil {
+			length, err := file.WriteString(fmt.Sprintf("%s", struc))
+			if err != nil {
+				fmt.Println("Save File fail: " + err.Error())
+				return
+			}
+			fmt.Printf("wrote %d bytes\n", length)
+		} else {
+			fmt.Println(string(struc))
+		}
 	}
 }
 
