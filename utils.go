@@ -81,14 +81,14 @@ var Debug = false
 
 // Generate Given a Column map with datatypes and a name structName,
 // attempts to generate a struct definition
-func Generate(columnTypes map[string]map[string]string, columnsSorted []string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) ([]byte, error) {
+func Generate(columnTypes map[string]map[string]string, columnsSorted []string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, dbAnnotation bool, gureguTypes bool) ([]byte, error) {
 	var dbTypes string
-	dbTypes = generateMysqlTypes(columnTypes, columnsSorted, 0, jsonAnnotation, gormAnnotation, gureguTypes)
+	dbTypes = generateMysqlTypes(columnTypes, columnsSorted, 0, jsonAnnotation, gormAnnotation, dbAnnotation, gureguTypes)
 	src := fmt.Sprintf("package %s\ntype %s %s\n}",
 		pkgName,
 		structName,
 		dbTypes)
-	if gormAnnotation == true {
+	if gormAnnotation == true || dbAnnotation == true {
 		tableNameFunc := "// TableName sets the insert table name for this struct type\n" +
 			"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") TableName() string {\n" +
 			"	return \"" + tableName + "\"" +

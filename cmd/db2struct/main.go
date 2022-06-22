@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Shelnutt2/db2struct"
 	goopt "github.com/droundy/goopt"
+	"github.com/ericksonjoseph/db2struct"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/howeyc/gopass"
 )
@@ -24,6 +24,7 @@ var structName = goopt.String([]string{"--struct"}, "", "name to set for struct"
 
 var jsonAnnotation = goopt.Flag([]string{"--json"}, []string{"--no-json"}, "Add json annotations (default)", "Disable json annotations")
 var gormAnnotation = goopt.Flag([]string{"--gorm"}, []string{}, "Add gorm annotations (tags)", "")
+var dbAnnotation = goopt.Flag([]string{"--db"}, []string{}, "Add db annotations (tags)", "")
 var gureguTypes = goopt.Flag([]string{"--guregu"}, []string{}, "Add guregu null types", "")
 var targetFile = goopt.String([]string{"--target"}, "", "Save file path")
 
@@ -100,7 +101,7 @@ func main() {
 		*packageName = "newpackage"
 	}
 	// Generate struct string based on columnDataTypes
-	struc, err := db2struct.Generate(*columnDataTypes, columnsSorted, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *gureguTypes)
+	struc, err := db2struct.Generate(*columnDataTypes, columnsSorted, *mariadbTable, *structName, *packageName, *jsonAnnotation, *gormAnnotation, *dbAnnotation, *gureguTypes)
 
 	if err != nil {
 		fmt.Println("Error in creating struct from json: " + err.Error())

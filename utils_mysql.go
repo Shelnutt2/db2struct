@@ -65,7 +65,7 @@ func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string, mariad
 }
 
 // Generate go struct entries for a map[string]interface{} structure
-func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) string {
+func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string, depth int, jsonAnnotation bool, gormAnnotation bool, dbAnnotation bool, gureguTypes bool) string {
 	structure := "struct {"
 
 	for _, key := range columnsSorted {
@@ -94,14 +94,17 @@ func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string
 		if jsonAnnotation == true {
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
 		}
+		if dbAnnotation == true {
+			annotations = append(annotations, fmt.Sprintf("db:\"%s\"", key))
+		}
 
 		if len(annotations) > 0 {
 			// add colulmn comment
-			comment:=mysqlType["comment"]
+			comment := mysqlType["comment"]
 			structure += fmt.Sprintf("\n%s %s `%s`  //%s", fieldName, valueType, strings.Join(annotations, " "), comment)
 			//structure += fmt.Sprintf("\n%s %s `%s`", fieldName, valueType, strings.Join(annotations, " "))
 		} else {
-			structure += fmt.Sprintf("\n%s %s",fieldName,valueType)
+			structure += fmt.Sprintf("\n%s %s", fieldName, valueType)
 		}
 	}
 	return structure
