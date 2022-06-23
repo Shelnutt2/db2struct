@@ -26,6 +26,7 @@ const (
 	sqlNullString    = "sql.NullString"
 	gureguNullTime   = "null.Time"
 	golangTime       = "time.Time"
+	golangNullTime   = "*time.Time"
 )
 
 // commonInitialisms is a set of common initialisms.

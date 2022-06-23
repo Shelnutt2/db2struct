@@ -194,8 +194,11 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, signed
 		}
 		return "string"
 	case "date", "datetime", "time", "timestamp":
-		if nullable && gureguTypes {
-			return gureguNullTime
+		if nullable {
+			if gureguTypes {
+				return gureguNullTime
+			}
+			return golangNullTime
 		}
 		return golangTime
 	case "decimal", "double":
