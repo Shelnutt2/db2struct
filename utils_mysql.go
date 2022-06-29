@@ -127,7 +127,7 @@ func generateMysqlTypes(obj map[string]map[string]string, columnsSorted []string
 		var valueType string
 		// If the guregu (https://github.com/guregu/null) CLI option is passed use its types, otherwise use go's sql.NullX
 
-		valueType = mysqlTypeToGoType(mysqlType["value"], nullable, gureguTypes, isSigned(mysqlType["columnType"]))
+		valueType = mysqlTypeToGoType(mysqlType["value"], nullable, gureguTypes, mysqlType["columnType"])
 
 		fieldName := fmtFieldName(stringifyFirstChar(key))
 		var annotations []string
@@ -160,7 +160,8 @@ func isSigned(columnType string) bool {
 }
 
 // mysqlTypeToGoType converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
-func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, signed bool) string {
+func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, columnType string) string {
+	signed := isSigned(columnType)
 	switch mysqlType {
 	case "tinyint", "int", "smallint", "mediumint":
 		if nullable {
@@ -218,6 +219,13 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, signed
 		}
 		return golangFloat32
 	case "binary", "blob", "longblob", "mediumblob", "varbinary":
+		// This assumes that any binary(16) is a uuid
+		if columnType == "binary(16)" {
+			if nullable {
+				return skyhopNullBinaryUUID
+			}
+			return skyhopBinaryUUID
+		}
 		if nullable {
 			return golangNullByteArray
 		}

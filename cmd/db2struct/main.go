@@ -100,7 +100,7 @@ func main() {
 		tablesSorted = []string{*mariadbTable}
 	}
 
-	heading := fmt.Sprintf("// This file was automatically generated. Do not edit.\n\npackage %s\n\nimport (\n\t\"database/sql\"\n\t\"time\"\n)", *packageName)
+	heading := fmt.Sprintf("// This file was automatically generated. Do not edit.\n\npackage %s\n\nimport (\n\t\"database/sql\"\n\t\"time\"\n\n\t\"github.com/skyhop-tech/go-sky/internal/database\"\n)", *packageName)
 
 	var file *os.File
 
