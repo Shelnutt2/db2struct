@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	goopt "github.com/droundy/goopt"
-	"github.com/ericksonjoseph/db2struct"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/howeyc/gopass"
+	"github.com/skyhop-tech/db2struct"
 )
 
 var mariadbHost = os.Getenv("MYSQL_HOST")
