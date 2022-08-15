@@ -30,6 +30,8 @@ const (
 	golangNullTime       = "*time.Time"
 	skyhopBinaryUUID     = "database.BinaryUUID"
 	skyhopNullBinaryUUID = "*database.BinaryUUID"
+	skyhopPoint          = "database.Point"
+	skyhopNullPoint      = "*database.Point"
 )
 
 // commonInitialisms is a set of common initialisms.
@@ -46,27 +48,27 @@ var commonInitialisms = map[string]bool{
 	"HTML":  true,
 	"HTTP":  true,
 	"HTTPS": true,
-	"ID":    true,
-	"IP":    true,
-	"JSON":  true,
-	"LHS":   true,
-	"QPS":   true,
-	"RAM":   true,
-	"RHS":   true,
-	"RPC":   true,
-	"SLA":   true,
-	"SMTP":  true,
-	"SSH":   true,
-	"TLS":   true,
-	"TTL":   true,
-	"UI":    true,
-	"UID":   true,
-	"UUID":  true,
-	"URI":   true,
-	"URL":   true,
-	"UTF8":  true,
-	"VM":    true,
-	"XML":   true,
+	//"ID":    true,
+	"IP":   true,
+	"JSON": true,
+	"LHS":  true,
+	"QPS":  true,
+	"RAM":  true,
+	"RHS":  true,
+	"RPC":  true,
+	"SLA":  true,
+	"SMTP": true,
+	"SSH":  true,
+	"TLS":  true,
+	"TTL":  true,
+	"UI":   true,
+	"UID":  true,
+	"UUID": true,
+	"URI":  true,
+	"URL":  true,
+	"UTF8": true,
+	"VM":   true,
+	"XML":  true,
 }
 
 var intToWordMap = []string{

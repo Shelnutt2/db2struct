@@ -218,6 +218,11 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, column
 			return sqlNullFloat
 		}
 		return golangFloat32
+	case "point":
+		if nullable {
+			return skyhopNullPoint
+		}
+		return skyhopPoint
 	case "binary", "blob", "longblob", "mediumblob", "varbinary":
 		// This assumes that any binary(16) is a uuid
 		if columnType == "binary(16)" {
