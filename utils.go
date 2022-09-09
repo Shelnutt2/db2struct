@@ -10,13 +10,23 @@ import (
 
 // Constants for return types of golang
 const (
+	golangNullInt     = "*int"
+	golangNullInt32   = "*int32"
+	golangNullInt64   = "*int64"
+	golangNullFloat   = "*float"
+	golangNullFloat32 = "*float32"
+	golangNullFloat64 = "*float64"
+	golangNullString  = "*string"
+
 	golangByteArray      = "[]byte"
 	golangNullByteArray  = "*[]byte"
 	golangUint64         = "uint64"
 	golangNullUint64     = "*uint64"
 	gureguNullInt        = "null.Int"
 	sqlNullInt           = "sql.NullInt64"
+	sqlNullInt32         = "sql.NullInt32"
 	golangInt            = "int"
+	golangInt32          = "int32"
 	golangInt64          = "int64"
 	gureguNullFloat      = "null.Float"
 	sqlNullFloat         = "sql.NullFloat64"
@@ -32,6 +42,8 @@ const (
 	skyhopNullBinaryUUID = "*database.BinaryUUID"
 	skyhopPoint          = "database.Point"
 	skyhopNullPoint      = "*database.Point"
+	// skyhopTime           = "database.Time"
+	// skyhopNullTime       = "*database.Time"
 )
 
 // commonInitialisms is a set of common initialisms.
@@ -102,6 +114,186 @@ func Generate(columnTypes map[string]map[string]string, columnsSorted []string, 
 			"}"
 		src = fmt.Sprintf("%s\n%s", src, tableNameFunc)
 	}
+	formatted, err := format.Source([]byte(src))
+	if err != nil {
+		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
+	}
+	return formatted, err
+}
+
+func GenerateServiceObject(columnTypes map[string]map[string]string, columnsSorted []string, internalDir, tableName, structName string, jsonAnnotation bool, gormAnnotation bool, dbAnnotation bool, gureguTypes bool) ([]byte, error) {
+
+	title := structNameToTitle(structName)
+	dbTypes := generateServiceTypes(columnTypes, columnsSorted, 0, jsonAnnotation, gormAnnotation, dbAnnotation, gureguTypes)
+	strct := fmt.Sprintf("\n\ntype %s %s\n}", title, dbTypes)
+	heading := "// This file was automatically generated. Do not edit.\n\n" +
+		"package object\n\n" +
+		"import (\n" +
+		"	\"time\"\n" +
+		"\n" +
+		"	\"github.com/skyhop-tech/go-sky/cmd/manifest-api/internal/database\"\n" +
+		"	\"github.com/skyhop-tech/go-sky/internal/helper\"\n" +
+		")\n\n"
+	from := "\n" +
+		"func " + title + "FromModel(obj *database." + structName + ") *" + title + " {\n" +
+		"	return &" + title + "{\n" +
+		"		%v\n" +
+		"	}\n" +
+		"}\n"
+	fromcnv := generateServiceConversion(columnTypes, columnsSorted)
+	from = fmt.Sprintf(from, fromcnv)
+	to := "\n" +
+		"func New" + title + "Model(obj *" + title + ") *database." + structName + " {\n" +
+		"	return &database." + structName + "{\n" +
+		"		%v\n" +
+		"	}\n" +
+		"}\n"
+	tocnv := generateSqlConversion(columnTypes, columnsSorted)
+	to = fmt.Sprintf(to, tocnv)
+
+	src := fmt.Sprintf("%s\n%s\n%s\n%s\n", heading, strct, from, to)
+	formatted, err := format.Source([]byte(src))
+	if err != nil {
+		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
+	}
+	return formatted, err
+}
+
+func GenerateServiceObjectText(columnTypes map[string]map[string]string, columnsSorted []string, internalDir, tableName string, jsonAnnotation bool, gormAnnotation bool, dbAnnotation bool, gureguTypes bool) ([]byte, error) {
+
+	structName := strings.Title(tableName)
+	title := structNameToTitle(structName)
+	dbTypes := generateServiceTypes(columnTypes, columnsSorted, 0, jsonAnnotation, gormAnnotation, dbAnnotation, gureguTypes)
+	strct := fmt.Sprintf("\n\ntype %s %s\n}", title, dbTypes)
+	from := "\n" +
+		"func " + title + "FromModel(obj *database." + structName + ") *" + title + " {\n" +
+		"	return &" + title + "{\n" +
+		"		%v\n" +
+		"	}\n" +
+		"}\n"
+	fromcnv := generateServiceConversion(columnTypes, columnsSorted)
+	from = fmt.Sprintf(from, fromcnv)
+	to := "\n" +
+		"func New" + title + "Model(obj *" + title + ") *database." + structName + " {\n" +
+		"	return &database." + structName + "{\n" +
+		"		%v\n" +
+		"	}\n" +
+		"}\n"
+	tocnv := generateSqlConversion(columnTypes, columnsSorted)
+	to = fmt.Sprintf(to, tocnv)
+
+	src := fmt.Sprintf("\n%s\n%s\n%s\n", strct, from, to)
+	formatted, err := format.Source([]byte(src))
+	if err != nil {
+		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
+	}
+	return formatted, err
+}
+
+func structNameToTitle(name string) string {
+	title := name
+	for {
+		ind := strings.Index(title, "_")
+		if ind < 0 {
+			break
+		}
+		title = title[:ind] + strings.Title(title[ind+1:])
+	}
+	return title
+}
+
+// Generate Given a Column map with datatypes and a name structName,
+// attempts to generate a struct definition
+func GenerateCRUD(columnTypes map[string]map[string]string, columnsSorted []string, tableName string, structName string, jsonAnnotation bool, gormAnnotation bool, dbAnnotation bool, gureguTypes bool) ([]byte, error) {
+	var src string
+	structNameTitle := structName
+	tableNameTitle := tableName
+	for {
+		ind := strings.Index(structNameTitle, "_")
+		if ind < 0 {
+			break
+		}
+		structNameTitle = structNameTitle[:ind] + strings.Title(structNameTitle[ind+1:])
+	}
+	for {
+		ind := strings.Index(tableNameTitle, "_")
+		if ind < 0 {
+			break
+		}
+		tableNameTitle = tableNameTitle[:ind] + strings.Title(tableNameTitle[ind+1:])
+	}
+	tableName = strings.Title(tableName)
+	heading := "// This file was automatically generated. Do not edit.\n\n" +
+		"package database\n\n" +
+		"import (\n" +
+		"	\"context\"\n" +
+		"	\"fmt\"\n" +
+		"	\"time\"\n" +
+		"\n" +
+		"	\"github.com/pkg/errors\"\n" +
+		"	\"github.com/skyhop-tech/go-sky/internal/database\"\n" +
+		")\n\n" +
+		"var (\n" +
+		"	" + tableNameTitle + "TableName = (&" + tableName + "{}).TableName()\n" +
+		"	" + tableNameTitle + "TableColumns []string\n" +
+		"	" + tableNameTitle + "TableColumnsEscaped []string\n" +
+		")\n\n" +
+		"func init() {\n" +
+		"	" + tableNameTitle + "TableColumns = database.Columns(&" + tableName + "{})\n" +
+		"	var escaped []string\n" +
+		"	for _, c := range " + tableNameTitle + "TableColumns {\n" +
+		"		escaped = append(escaped, fmt.Sprintf(\"`%v`\", c))\n" +
+		"	}\n" +
+		"	" + tableNameTitle + "TableColumnsEscaped = escaped\n" +
+		"}\n"
+	createFunc := "// Create" + structNameTitle + "s - insert many\n" +
+		"func (c *Client) Create" + structNameTitle + "s(ctx context.Context, input []*" + structName + ") error {\n" +
+		"	var insertData []any\n" +
+		"	for _, v := range input {\n" +
+		"		insertData = append(insertData, v)\n" +
+		"	}\n\n" +
+		"	escapedColumns, data, err := database.PrepareBulkInsert(" + tableNameTitle + "TableColumns, insertData)\n" +
+		"	if err != nil {\n" +
+		"		return errors.Wrap(err, \"prepare bulk insert\")\n" +
+		"	}\n\n" +
+		"	_, err = database.InsertMany(ctx, c.logger, c.db, " + tableNameTitle + "TableName, escapedColumns, data)\n" +
+		"	if err != nil {\n" +
+		"		return errors.Wrap(err, \"create " + strings.ToLower(structName) + "\")\n" +
+		"	}\n\n" +
+		"	return nil\n" +
+		"}\n"
+	listFunc := "// Create" + structNameTitle + "s - insert many\n" +
+		"func (c *Client) List" + structNameTitle + "s(ctx context.Context, filters map[string]interface{}, pageSize, pageToken int32) ([]*" + structName + ", error) {" +
+		"	var results []*" + structName + "\n\n" +
+		"	err := database.GetManyByFilters(ctx, c.logger, c.db, " + tableNameTitle + "TableColumnsEscaped, " + tableNameTitle + "TableName, filters, pageSize, pageToken, func() interface{} {\n" +
+		"		return &results\n" +
+		"	})\n\n" +
+		"	if err != nil {\n" +
+		"		return nil, errors.Wrap(err, \"list " + strings.ToLower(structName) + "\")\n" +
+		"	}\n\n" +
+		"	return results, nil\n" +
+		"}\n"
+	updateFunc := "" +
+		"func (c *Client) Update" + structNameTitle + "(ctx context.Context, input *" + structName + ") error {\n" +
+		"	// update value for field Updated_At\n" +
+		"	now := time.Now()\n" +
+		"	input.UpdatedAt = &now\n" +
+		"	data := database.ToMap(input)\n\n" +
+		"	// delete Created At/By fields so we don't override it\n" +
+		"	delete(data, \"created_at\")\n" +
+		"	delete(data, \"created_by\")\n\n" +
+		"	result, err := database.UpdateByField(ctx, c.logger, c.db, " + tableNameTitle + "TableName, \"id\", input.Id, data)\n" +
+		"	if err != nil {\n" +
+		"		return errors.Wrap(err, \"update " + strings.ToLower(structName) + " by id\")\n" +
+		"	}\n\n" +
+		"	updated, err := result.RowsAffected()\n" +
+		"	if err != nil || updated == 0 {\n" +
+		"		return errors.Wrap(err, fmt.Sprintf(\"unable to update " + strings.ToLower(structName) + " by id %v\", input.Id))\n" +
+		"	}\n\n" +
+		"	return nil\n" +
+		"}"
+
+	src = fmt.Sprintf("%v\n%s\n%s\n%s\n%s", heading, src, createFunc, listFunc, updateFunc)
 	formatted, err := format.Source([]byte(src))
 	if err != nil {
 		err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)

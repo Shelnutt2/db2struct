@@ -194,7 +194,7 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, column
 			return sqlNullString
 		}
 		return "string"
-	case "date", "datetime", "time", "timestamp":
+	case "date", "time", "datetime", "timestamp":
 		if nullable {
 			if gureguTypes {
 				return gureguNullTime
@@ -202,7 +202,12 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, column
 			return golangNullTime
 		}
 		return golangTime
-	case "decimal", "double":
+	// case "time":
+	// if nullable {
+	// return skyhopNullTime
+	// }
+	// return skyhopTime
+	case "float", "decimal", "double":
 		if nullable {
 			if gureguTypes {
 				return gureguNullFloat
@@ -210,14 +215,6 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, column
 			return sqlNullFloat
 		}
 		return golangFloat64
-	case "float":
-		if nullable {
-			if gureguTypes {
-				return gureguNullFloat
-			}
-			return sqlNullFloat
-		}
-		return golangFloat32
 	case "point":
 		if nullable {
 			return skyhopNullPoint
@@ -238,3 +235,285 @@ func mysqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool, column
 	}
 	return ""
 }
+
+// Generate go struct entries for a map[string]interface{} structure
+func generateServiceTypes(obj map[string]map[string]string, columnsSorted []string, depth int, jsonAnnotation bool, gormAnnotation bool, dbAnnotation bool, gureguTypes bool) string {
+	structure := "struct {"
+
+	for _, key := range columnsSorted {
+		mysqlType := obj[key]
+		nullable := false
+		if mysqlType["nullable"] == "YES" {
+			nullable = true
+		}
+
+		primary := ""
+		if mysqlType["primary"] == "PRI" {
+			primary = ";primary_key"
+		}
+
+		// Get the corresponding go value type for this mysql type
+		var valueType string
+		// If the guregu (https://github.com/guregu/null) CLI option is passed use its types, otherwise use go's sql.NullX
+
+		valueType = dbTypeToPrimitiveType(mysqlType["value"], nullable, gureguTypes, mysqlType["columnType"])
+
+		fieldName := fmtFieldName(stringifyFirstChar(key))
+		var annotations []string
+		if gormAnnotation == true {
+			annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s%s\"", key, primary))
+		}
+		if jsonAnnotation == true {
+			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
+		}
+		if dbAnnotation == true {
+			annotations = append(annotations, fmt.Sprintf("db:\"%s\"", key))
+		}
+
+		if len(annotations) > 0 {
+			// add colulmn comment
+			comment := mysqlType["comment"]
+			structure += fmt.Sprintf("\n%s %s `%s`", fieldName, valueType, strings.Join(annotations, " "))
+			if comment != "" {
+				structure += fmt.Sprintf("  // %s", comment)
+			}
+		} else {
+			structure += fmt.Sprintf("\n%s %s", fieldName, valueType)
+		}
+	}
+	return structure
+}
+
+// Generate go struct entries for a map[string]interface{} structure
+func generateServiceConversion(obj map[string]map[string]string, columnsSorted []string) string {
+	var structure string
+
+	for _, key := range columnsSorted {
+		mysqlType := obj[key]
+		nullable := false
+		if mysqlType["nullable"] == "YES" {
+			nullable = true
+		}
+
+		// Get the corresponding go value type for this mysql type
+		conv := mysqlTypeConversion(mysqlType["value"], nullable, false, mysqlType["columnType"])
+		fieldName := fmtFieldName(stringifyFirstChar(key))
+
+		o := fmt.Sprintf("obj.%s", fieldName)
+		c := fmt.Sprintf(conv, o)
+		structure += fmt.Sprintf("\n%s: %s,", fieldName, c)
+	}
+	return structure
+}
+
+func generateSqlConversion(obj map[string]map[string]string, columnsSorted []string) string {
+	var structure string
+
+	for _, key := range columnsSorted {
+		mysqlType := obj[key]
+		nullable := false
+		if mysqlType["nullable"] == "YES" {
+			nullable = true
+		}
+
+		// Get the corresponding go value type for this mysql type
+		conv := objTypeConversion(mysqlType["value"], nullable, false, mysqlType["columnType"])
+		fieldName := fmtFieldName(stringifyFirstChar(key))
+
+		if fieldName == "Id" {
+			structure += fmt.Sprintf("\n%s: helper.NewUUIDIfBlank(obj.Id),", fieldName)
+		} else {
+			o := fmt.Sprintf("obj.%s", fieldName)
+			c := fmt.Sprintf(conv, o)
+			structure += fmt.Sprintf("\n%s: %s,", fieldName, c)
+		}
+	}
+	return structure
+}
+
+func dbTypeToPrimitiveType(mysqlType string, nullable bool, gureguTypes bool, columnType string) string {
+	signed := isSigned(columnType)
+	switch mysqlType {
+	case "tinyint", "int", "smallint", "mediumint":
+		if nullable {
+			return golangNullInt
+		}
+		return golangInt
+	case "bigint":
+		// Until they support this https://go-review.googlesource.com/c/go/+/344410/
+		if !signed {
+			if nullable {
+				return golangNullUint64
+			}
+			return golangUint64
+		}
+		if nullable {
+			return golangNullInt64
+		}
+		return golangInt64
+	case "char", "enum", "varchar", "longtext", "mediumtext", "text", "tinytext", "json":
+		if nullable {
+			return golangNullString
+		}
+		return "string"
+	case "date", "time", "datetime", "timestamp":
+		if nullable {
+			return golangNullTime
+		}
+		return golangTime
+	case "decimal", "double", "float":
+		if nullable {
+			return golangNullFloat64
+		}
+		return golangFloat64
+	// case "float":
+	// 	if nullable {
+	// 		return golangNullFloat32
+	// 	}
+	// 	return golangFloat32
+	case "point":
+		if nullable {
+			return skyhopNullPoint
+		}
+		return skyhopPoint
+	case "binary", "blob", "longblob", "mediumblob", "varbinary":
+		// This assumes that any binary(16) is a uuid
+		if columnType == "binary(16)" {
+			if nullable {
+				return golangNullString
+			}
+			return "string"
+		}
+		if nullable {
+			return golangNullByteArray
+		}
+		return golangByteArray
+	}
+	return ""
+}
+
+// mysqlTypeConversion converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
+func mysqlTypeConversion(mysqlType string, nullable bool, gureguTypes bool, columnType string) string {
+	signed := isSigned(columnType)
+	switch mysqlType {
+	case "tinyint", "int", "smallint", "mediumint":
+		if nullable {
+			return "helper.SqlNullInt32ToNullableInt32(%v)"
+		}
+	case "bigint":
+		if !signed {
+			if nullable {
+				return "helper.SqlNullInt64ToNullableInt64(%v)"
+			}
+		}
+		if nullable {
+			return "helper.SqlNullInt32ToNullableInt32(%v)"
+		}
+	case "char", "enum", "varchar", "longtext", "mediumtext", "text", "tinytext", "json":
+		if nullable {
+			return "helper.SqlNullStringToNullableString(%v)"
+		}
+	case "decimal", "double", "float":
+		if nullable {
+			return "helper.SqlNullFloat64ToNullableFloat64(%v)"
+		}
+	// case "float":
+	// 	if nullable {
+	// 		return "helper.SqlNullFloat32ToNullableFloat32(%v)"
+	// 	}
+	// case "date", "time", "datetime", "timestamp":
+	// 	if nullable {
+	// 		return golangNullTime
+	// 	}
+	// case "point":
+	// 	if nullable {
+	// 		return skyhopNullPoint
+	// 	}
+	// 	return skyhopPoint
+	case "binary", "blob", "longblob", "mediumblob", "varbinary":
+		// This assumes that any binary(16) is a uuid
+		if columnType == "binary(16)" {
+			if nullable {
+				return "helper.NullableUUIDToString(%v)"
+			}
+			return "helper.UUIDToString(%v)"
+		}
+		// if nullable {
+		// 	return golangNullByteArray
+		// }
+		// return golangByteArray
+	}
+
+	return "%v"
+}
+
+// mysqlTypeConversion converts the mysql types to go compatible sql.Nullable (https://golang.org/pkg/database/sql/) types
+func objTypeConversion(mysqlType string, nullable bool, gureguTypes bool, columnType string) string {
+	signed := isSigned(columnType)
+	switch mysqlType {
+	case "tinyint", "int", "smallint", "mediumint":
+		if nullable {
+			return "helper.NullableInt32ToSqlNullInt32(%v)"
+		}
+	case "bigint":
+		if !signed {
+			if nullable {
+				return "helper.NullableInt64ToSqlNullInt64(%v)"
+			}
+		}
+		if nullable {
+			return "helper.NullableInt32ToSqlNullInt32(%v)"
+		}
+	case "char", "enum", "varchar", "longtext", "mediumtext", "text", "tinytext", "json":
+		if nullable {
+			return "helper.NullableStringToSqlNullString(%v)"
+		}
+	case "decimal", "double", "float":
+		if nullable {
+			return "helper.NullableFloat64ToSqlNullFloat64(%v)"
+		}
+	// case "float":
+	// 	if nullable {
+	// 		return "helper.SqlNullFloat32ToNullableFloat32(%v)"
+	// 	}
+	// case "date", "time", "datetime", "timestamp":
+	// 	if nullable {
+	// 		return golangNullTime
+	// 	}
+	// case "point":
+	// 	if nullable {
+	// 		return skyhopNullPoint
+	// 	}
+	// 	return skyhopPoint
+	case "binary", "blob", "longblob", "mediumblob", "varbinary":
+		// This assumes that any binary(16) is a uuid
+		if columnType == "binary(16)" {
+			if nullable {
+				return "helper.StringToNullableUUID(%v)"
+			}
+			return "helper.StringToUUID(%v)"
+		}
+		// if nullable {
+		// 	return golangNullByteArray
+		// }
+		// return golangByteArray
+	}
+
+	return "%v"
+}
+
+// UnwrapNullableString(w *wrapperspb.StringValue)
+// UnwrapString(w *wrapperspb.StringValue)
+// WrapString(s string)
+// WrapNullableString(s *string)
+// WrapNullableInt64(n *int64)
+// UnwrapNullableInt64(w *wrapperspb.Int64Value)
+// StringToNullableUUID(s *string)
+// NullableUUIDToString(id *database.BinaryUUID)
+// WrapTimeAsNullableString(t *time.Time)
+// NullableStringToSqlNullString(s *string)
+// SqlNullStringToNullableString(s sql.NullString)
+// NullableInt64ToSqlNullInt64(n *int64)
+// SqlNullInt64ToNullableInt64(n sql.NullInt64)
+// NullableFloat64ToSqlNullInt64(n)
+// SqlNullFloat64ToNullableInt64(n)
